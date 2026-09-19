@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: silho-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: silho
+      POSTGRES_USER: silho
+      POSTGRES_PASSWORD: silho
+    ports:
+      - "5433:5432"
+    volumes:
+      - silho-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  silho-postgres-data:
