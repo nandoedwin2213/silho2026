@@ -232,6 +232,7 @@ model Order {
   currency        String        @default("USD")
   paymentMethod   PaymentMethod @map("payment_method")
   status          OrderStatus   @default(PENDING)
+  paidAt          DateTime?     @map("paid_at")
   acceptedTerms   Boolean       @map("accepted_terms")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")

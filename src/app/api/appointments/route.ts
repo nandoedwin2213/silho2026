@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { appointmentSchema } from "@/lib/validation/appointment";
+import { zonedDateToUtc } from "@/lib/time";
 
 export async function POST(request: Request) {
   const result = rateLimit(`appointment:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -10,13 +11,11 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos.", issues: parsed.error.flatten() }, { status: 400 });
   const { firstName, lastName, documentId, email, phone, city, time, acceptPrivacy: _acceptPrivacy, ...appointmentData } = parsed.data;
   void _acceptPrivacy;
-  const date = new Date(appointmentData.date);
-  const [hours, minutes] = time.split(":").map(Number);
-  date.setHours(hours, minutes, 0, 0);
+  const date = zonedDateToUtc(appointmentData.date.toISOString().slice(0, 10), time);
   const appointment = await db.$transaction(async (tx) => {
     const patient = await tx.patient.upsert({
       where: { documentId },
-      update: { firstName, lastName, email, phone, city },
+      update: {},
       create: { firstName, lastName, documentId, email, phone, city },
     });
     const created = await tx.appointment.create({ data: { ...appointmentData, date, patientId: patient.id } });

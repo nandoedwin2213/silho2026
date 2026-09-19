@@ -93,7 +93,7 @@ El sitio queda en `http://localhost:3000` y el panel en `http://localhost:3000/a
 | `DATABASE_URL` | Conexión PostgreSQL local o Neon. |
 | `ADMIN_EMAIL` | Correo del administrador creado por el seed. |
 | `ADMIN_PASSWORD` | Contraseña inicial del administrador. |
-| `AUTH_SECRET` | Secreto largo para firmar la sesión JWT. |
+| `AUTH_SECRET` | Secreto obligatorio y largo para firmar la sesión JWT. Genera uno con `openssl rand -base64 32`. |
 | `NEXT_PUBLIC_APP_URL` | URL pública para enlaces y PayPhone. |
 | `PAYPHONE_TOKEN` | Token server-only de PayPhone. |
 | `PAYPHONE_STORE_ID` | Identificador de tienda PayPhone. |
@@ -103,6 +103,8 @@ El sitio queda en `http://localhost:3000` y el panel en `http://localhost:3000/a
 | `RESEND_API_KEY` | API key opcional para correo transaccional. |
 
 La configuración operativa (`PRONTO_PAGO_DISCOUNT`, WhatsApp, redes, correo, transferencia y precios quirúrgicos) se administra desde `Configuración` y se almacena en `Setting`.
+
+Las citas se almacenan en la zona horaria de la clínica: `America/Guayaquil`.
 
 ## Despliegue en Vercel + Neon
 

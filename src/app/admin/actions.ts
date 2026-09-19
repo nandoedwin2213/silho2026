@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { serviceAdminSchema } from "@/lib/validation/service";
 import { checkoutTotal } from "@/lib/order-total";
 import { z } from "zod";
+import { AppointmentStatus, LeadStatus, SubscriptionStatus } from "@prisma/client";
 
 const idSchema = z.string().min(1);
 const settingSchema = z.object({ discount: z.coerce.number().min(0).max(50), whatsapp: z.string().min(7), instagram: z.string().url().or(z.literal("")), tiktok: z.string().url().or(z.literal("")), facebook: z.string().url().or(z.literal("")), surgical: z.boolean(), email: z.string().email(), instructions: z.string().min(5) });
@@ -33,9 +34,9 @@ export async function saveServiceAction(formData: FormData) {
   const { concerns: concernSlugs, ...data } = parsed;
   const id = String(formData.get("id") || "");
   const service = id ? await db.service.update({ where: { id }, data }) : await db.service.create({ data });
+  await db.serviceConcern.deleteMany({ where: { serviceId: service.id } });
   if (concernSlugs.length) {
     const concerns = await db.concern.findMany({ where: { slug: { in: concernSlugs } } });
-    await db.serviceConcern.deleteMany({ where: { serviceId: service.id } });
     await db.serviceConcern.createMany({ data: concerns.map((concern) => ({ serviceId: service.id, concernId: concern.id })), skipDuplicates: true });
   }
   revalidatePath("/admin/servicios"); revalidatePath("/tratamientos"); revalidatePath("/");
@@ -47,10 +48,11 @@ export async function updateStatusAction(formData: FormData) {
   const model = String(formData.get("model"));
   const id = idSchema.parse(formData.get("id"));
   const status = String(formData.get("status"));
-  if (model === "lead") await db.lead.update({ where: { id }, data: { status: status as never } });
-  if (model === "appointment") await db.appointment.update({ where: { id }, data: { status: status as never } });
-  if (model === "subscription") await db.subscription.update({ where: { id }, data: { status: status as never } });
-  if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) await db.order.update({ where: { id }, data: { status: status as never } });
+  if (model === "lead") await db.lead.update({ where: { id }, data: { status: z.nativeEnum(LeadStatus).parse(status) } });
+  else if (model === "appointment") await db.appointment.update({ where: { id }, data: { status: z.nativeEnum(AppointmentStatus).parse(status) } });
+  else if (model === "subscription") await db.subscription.update({ where: { id }, data: { status: z.nativeEnum(SubscriptionStatus).parse(status) } });
+  else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) await db.order.update({ where: { id }, data: { status: status as "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED", ...(status === "PAID" ? { paidAt: new Date() } : {}) } });
+  else throw new Error("Modelo o estado inválido.");
   revalidatePath(`/admin/${model === "appointment" ? "citas" : `${model}s`}`);
 }
 
@@ -67,7 +69,7 @@ export async function saveSettingsAction(formData: FormData) {
 export async function markOrderPaidAction(formData: FormData) {
   await requireAdmin();
   const id = idSchema.parse(formData.get("id"));
-  await db.order.update({ where: { id }, data: { status: "PAID" } });
+  await db.order.update({ where: { id }, data: { status: "PAID", paidAt: new Date() } });
   revalidatePath("/admin/pedidos");
 }
 
@@ -94,8 +96,10 @@ export async function saveContentAction(formData: FormData) {
   await requireAdmin();
   const contentSchema = z.object({ title: z.string().min(2), slug: z.string().regex(/^[a-z0-9-]+$/), excerpt: z.string().min(2), content: z.string().min(2), category: z.string().min(2), coverImage: z.string().url().or(z.literal("")), published: z.boolean() });
   const parsed = contentSchema.parse({ title: formData.get("title"), slug: formData.get("slug"), excerpt: formData.get("excerpt") ?? "", content: formData.get("content") ?? "", category: formData.get("category") ?? "", coverImage: formData.get("coverImage") ?? "", published: formData.get("published") === "true" });
-  const data = { ...parsed, coverImage: parsed.coverImage || null, publishedAt: parsed.published ? new Date() : null };
   const id = String(formData.get("id") || "");
+  const existing = id ? await db.blogPost.findUnique({ where: { id }, select: { published: true, publishedAt: true } }) : null;
+  const publishedAt = parsed.published ? (existing?.published ? existing.publishedAt : new Date()) : null;
+  const data = { ...parsed, coverImage: parsed.coverImage || null, publishedAt };
   if (id) await db.blogPost.update({ where: { id }, data });
   else await db.blogPost.create({ data });
   revalidatePath("/blog"); revalidatePath("/admin/blog");
@@ -117,7 +121,7 @@ export async function toggleBlogPublishedAction(formData: FormData) {
 
 export async function saveProfessionalAction(formData: FormData) {
   await requireAdmin();
-  const arrayValue = (key: string) => JSON.stringify(String(formData.get(key) ?? "").split("\n").map((line) => line.trim()).filter(Boolean));
+  const arrayValue = (key: string): string[] => String(formData.get(key) ?? "").split("\n").map((line) => line.trim()).filter(Boolean);
   const professional = await db.professional.findFirst({ where: { active: true } });
   if (!professional) return;
   await db.professional.update({ where: { id: professional.id }, data: { name: String(formData.get("name")), title: String(formData.get("title")), bio: String(formData.get("bio")), photo: String(formData.get("photo") ?? "") || null, education: arrayValue("education"), experience: arrayValue("experience"), certifications: arrayValue("certifications"), publications: arrayValue("publications"), procedures: arrayValue("procedures"), socials: arrayValue("socials") } });

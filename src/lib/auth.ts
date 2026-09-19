@@ -3,9 +3,11 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
+import { getAuthSecret } from "./auth-secret";
 
 const cookieName = "silho-admin-session";
-const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET ?? "development-only-secret");
+export { getAuthSecret };
+const secret = () => new TextEncoder().encode(getAuthSecret());
 
 export async function login(email: string, password: string) {
   const user = await db.adminUser.findUnique({ where: { email: email.toLowerCase() } });

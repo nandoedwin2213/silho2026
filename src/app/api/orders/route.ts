@@ -4,6 +4,7 @@ import { getPaymentProvider } from "@/lib/payments";
 import { getPromptPaymentDiscount, priceBreakdown } from "@/lib/pricing";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validation/checkout";
+import { isPurchasable } from "@/lib/services";
 
 export async function POST(request: Request) {
   const limited = rateLimit(`order:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -12,11 +13,11 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos.", issues: parsed.error.flatten() }, { status: 400 });
   const input = parsed.data;
   const service = await db.service.findFirst({ where: { id: input.serviceId, active: true } });
-  if (!service || service.isSurgical || service.requiresMedicalAssessment || service.requiresManualQuote || !service.showPrice) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
+  if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
   const discount = await getPromptPaymentDiscount();
   const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible);
   const order = await db.$transaction(async (tx) => {
-    const patient = await tx.patient.upsert({ where: { documentId: input.documentId }, update: { firstName: input.nombre, lastName: input.apellido, email: input.email, phone: input.telefono, city: input.ciudad }, create: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: input.ciudad } });
+    const patient = await tx.patient.upsert({ where: { documentId: input.documentId }, update: {}, create: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: input.ciudad } });
     return tx.order.create({ data: { patientId: patient.id, serviceId: service.id, basePrice: breakdown.base, discountPercent: breakdown.discountPercent, discountAmount: breakdown.savings, total: breakdown.discounted, paymentMethod: input.paymentMethod, acceptedTerms: input.acceptTerms } });
   });
   if (input.paymentMethod !== "PAYPHONE") return NextResponse.json({ orderId: order.id, status: "PENDING" });
