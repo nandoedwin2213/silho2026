@@ -73,19 +73,45 @@ export async function markOrderPaidAction(formData: FormData) {
 
 export async function saveCategoryAction(formData: FormData) {
   await requireAdmin();
-  const schema = z.object({ id: z.string().optional(), name: z.string().min(2), slug: z.string().regex(/^[a-z0-9-]+$/), description: z.string().optional(), order: z.coerce.number().int(), active: z.boolean() });
-  const data = schema.parse({ id: formData.get("id") || undefined, name: formData.get("name"), slug: formData.get("slug"), description: formData.get("description") ?? "", order: formData.get("order"), active: formData.get("active") === "true" });
-  if (data.id) await db.category.update({ where: { id: data.id }, data });
-  else await db.category.create({ data });
+  const schema = z.object({ id: z.string().optional(), name: z.string().min(2), slug: z.string().regex(/^[a-z0-9-]+$/), description: z.string().optional(), order: z.coerce.number().int(), active: z.boolean(), image: z.string().url().or(z.literal("")) });
+  const data = schema.parse({ id: formData.get("id") || undefined, name: formData.get("name"), slug: formData.get("slug"), description: formData.get("description") ?? "", order: formData.get("order"), active: formData.get("active") === "true", image: formData.get("image") ?? "" });
+  const { id, ...categoryData } = data;
+  if (id) await db.category.update({ where: { id }, data: categoryData });
+  else await db.category.create({ data: categoryData });
+  revalidatePath("/tratamientos"); revalidatePath("/admin/categorias");
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  await requireAdmin();
+  const id = idSchema.parse(formData.get("id"));
+  const serviceCount = await db.service.count({ where: { categoryId: id } });
+  if (serviceCount > 0) await db.category.update({ where: { id }, data: { active: false } });
+  else await db.category.delete({ where: { id } });
   revalidatePath("/tratamientos"); revalidatePath("/admin/categorias");
 }
 
 export async function saveContentAction(formData: FormData) {
   await requireAdmin();
-  const data = { title: String(formData.get("title")), slug: String(formData.get("slug")), excerpt: String(formData.get("excerpt") ?? ""), content: String(formData.get("content") ?? ""), category: String(formData.get("category") ?? ""), coverImage: String(formData.get("coverImage") ?? "") || null, published: formData.get("published") === "true", publishedAt: formData.get("published") === "true" ? new Date() : null };
+  const contentSchema = z.object({ title: z.string().min(2), slug: z.string().regex(/^[a-z0-9-]+$/), excerpt: z.string().min(2), content: z.string().min(2), category: z.string().min(2), coverImage: z.string().url().or(z.literal("")), published: z.boolean() });
+  const parsed = contentSchema.parse({ title: formData.get("title"), slug: formData.get("slug"), excerpt: formData.get("excerpt") ?? "", content: formData.get("content") ?? "", category: formData.get("category") ?? "", coverImage: formData.get("coverImage") ?? "", published: formData.get("published") === "true" });
+  const data = { ...parsed, coverImage: parsed.coverImage || null, publishedAt: parsed.published ? new Date() : null };
   const id = String(formData.get("id") || "");
   if (id) await db.blogPost.update({ where: { id }, data });
   else await db.blogPost.create({ data });
+  revalidatePath("/blog"); revalidatePath("/admin/blog");
+}
+
+export async function deleteBlogPostAction(formData: FormData) {
+  await requireAdmin();
+  await db.blogPost.delete({ where: { id: idSchema.parse(formData.get("id")) } });
+  revalidatePath("/blog"); revalidatePath("/admin/blog");
+}
+
+export async function toggleBlogPublishedAction(formData: FormData) {
+  await requireAdmin();
+  const id = idSchema.parse(formData.get("id"));
+  const post = await db.blogPost.findUniqueOrThrow({ where: { id }, select: { published: true } });
+  await db.blogPost.update({ where: { id }, data: { published: !post.published, publishedAt: !post.published ? new Date() : null } });
   revalidatePath("/blog"); revalidatePath("/admin/blog");
 }
 
@@ -109,10 +135,34 @@ export async function saveLocationAction(formData: FormData) {
 
 export async function saveBeforeAfterAction(formData: FormData) {
   await requireAdmin();
-  const data = { title: String(formData.get("title")), beforeImage: String(formData.get("beforeImage")), afterImage: String(formData.get("afterImage")), patientConsent: formData.get("patientConsent") === "true", published: formData.get("published") === "true", description: String(formData.get("description") ?? "") || null };
-  if (!data.patientConsent) throw new Error("El consentimiento del paciente es obligatorio.");
-  await db.beforeAfter.create({ data });
+  const serviceId = String(formData.get("serviceId") || "");
+  const beforeAfterSchema = z.object({ title: z.string().min(2), serviceId: z.string().optional(), beforeImage: z.string().url(), afterImage: z.string().url(), patientConsent: z.literal(true), published: z.boolean(), description: z.string().optional() });
+  const parsed = beforeAfterSchema.parse({ title: formData.get("title"), serviceId: serviceId || undefined, beforeImage: formData.get("beforeImage"), afterImage: formData.get("afterImage"), patientConsent: formData.get("patientConsent") === "true", published: formData.get("published") === "true", description: String(formData.get("description") ?? "") || undefined });
+  const data = { ...parsed, serviceId: parsed.serviceId || null, description: parsed.description || null };
+  const id = String(formData.get("id") || "");
+  if (id) await db.beforeAfter.update({ where: { id }, data });
+  else await db.beforeAfter.create({ data });
   revalidatePath("/admin/antes-y-despues");
+}
+
+export async function deleteBeforeAfterAction(formData: FormData) {
+  await requireAdmin();
+  await db.beforeAfter.delete({ where: { id: idSchema.parse(formData.get("id")) } });
+  revalidatePath("/admin/antes-y-despues");
+}
+
+export async function toggleBeforeAfterPublishedAction(formData: FormData) {
+  await requireAdmin();
+  const id = idSchema.parse(formData.get("id"));
+  const record = await db.beforeAfter.findUniqueOrThrow({ where: { id }, select: { published: true } });
+  await db.beforeAfter.update({ where: { id }, data: { published: !record.published } });
+  revalidatePath("/admin/antes-y-despues");
+}
+
+export async function updateLeadNotesAction(formData: FormData) {
+  await requireAdmin();
+  await db.lead.update({ where: { id: idSchema.parse(formData.get("id")) }, data: { notes: String(formData.get("notes") ?? "").trim() || null } });
+  revalidatePath("/admin/leads");
 }
 
 export { checkoutTotal };
