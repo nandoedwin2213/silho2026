@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { rateLimit } from "@/lib/rate-limit";
+import { toPaymentStatus } from "@/lib/payments/status";
 
 export async function POST(request: Request) {
   const result = rateLimit(`payphone-confirm:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -11,7 +12,8 @@ export async function POST(request: Request) {
   const provider = getPaymentProvider("payphone");
   if (!provider) return NextResponse.json({ error: "Proveedor no disponible." }, { status: 500 });
   const resultPayment = await provider.confirmPayment({ providerTransactionId: body.id, clientTransactionId: body.clientTransactionId });
-  const payment = await db.payment.update({ where: { clientTransactionId: body.clientTransactionId }, data: { providerTransactionId: body.id, status: resultPayment.status === "APPROVED" ? "APPROVED" : resultPayment.status === "CANCELLED" ? "CANCELLED" : "ERROR", rawResponse: JSON.parse(JSON.stringify(resultPayment.raw)) }, include: { order: true } });
-  if (resultPayment.status === "APPROVED") await db.order.update({ where: { id: payment.orderId }, data: { status: "PAID" } });
+  const paymentStatus = toPaymentStatus(resultPayment.status);
+  const payment = await db.payment.update({ where: { clientTransactionId: body.clientTransactionId }, data: { providerTransactionId: body.id, status: paymentStatus, rawResponse: JSON.parse(JSON.stringify(resultPayment.raw)) }, include: { order: true } });
+  if (paymentStatus === "APPROVED") await db.order.update({ where: { id: payment.orderId }, data: { status: "PAID", paidAt: new Date() } });
   return NextResponse.json({ status: resultPayment.status, raw: resultPayment.raw });
 }
