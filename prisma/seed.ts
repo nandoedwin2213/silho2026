@@ -69,6 +69,16 @@ const services: ServiceSeed[] = [
   ...simple("otros-procedimientos", ["Manchas", "Melasma", "Fotoenvejecimiento", "Rosácea", "Textura de piel", "Poros", "Arrugas", "Flacidez", "Cuello", "Papada", "Rejuvenecimiento de manos", "Cicatrices", "Estrías", "Eliminación de lesiones estéticas", "Hidratación facial", "Skin quality", "Protocolos de glow facial"], 150),
 ];
 
+const isFeatured = (service: ServiceSeed) =>
+  service.name === "Full Face Botox" ||
+  (service.category === "acido-hialuronico" && service.name === "Labios") ||
+  (service.category === "rinoplastia" && service.name === "Rinomodelación no quirúrgica") ||
+  (service.category === "perfilamiento-facial" && service.name === "Perfilamiento mandibular") ||
+  (service.category === "medicina-capilar" && service.name === "PRP capilar") ||
+  (service.category === "acne" && service.name === "Láser CO2 fraccionado") ||
+  (service.category === "valoracion" && service.name === "Valoración estética facial") ||
+  (service.category === "acne" && service.name === "Programa SILHO Acné - 3 meses");
+
 const concernSeeds = ["Acné", "Cicatrices", "Arrugas", "Labios", "Nariz", "Mandíbula", "Mentón", "Ojeras", "Manchas", "Flacidez", "Cabello", "Poros", "Textura", "Rejuvenecimiento"];
 
 const slugify = (value: string) =>
@@ -110,7 +120,7 @@ async function main() {
         requiresMedicalAssessment: service.requiresMedicalAssessment ?? false,
         requiresManualQuote: service.requiresManualQuote ?? false,
         isSurgical: service.isSurgical ?? false,
-        featured: service.featured ?? false,
+        featured: isFeatured(service),
         active: true,
       },
       create: {
@@ -126,7 +136,7 @@ async function main() {
         requiresMedicalAssessment: service.requiresMedicalAssessment ?? false,
         requiresManualQuote: service.requiresManualQuote ?? false,
         isSurgical: service.isSurgical ?? false,
-        featured: service.featured ?? false,
+        featured: isFeatured(service),
       },
     });
     const relatedConcerns = service.concerns ?? concernSeeds.filter((concern) => service.name.toLowerCase().includes(concern.toLowerCase()));
@@ -148,6 +158,7 @@ async function main() {
     FACEBOOK_URL: "https://facebook.com/silho.ec",
     SHOW_SURGICAL_PRICES: "false",
     CLINIC_EMAIL: "contacto@silho.ec",
+    BANK_TRANSFER_INSTRUCTIONS: "Transferencia bancaria: información de cuenta por confirmar. Te contactaremos para compartir los datos y validar tu pago.",
   };
   for (const [key, value] of Object.entries(settings)) {
     await prisma.setting.upsert({ where: { key }, update: { value }, create: { key, value } });
