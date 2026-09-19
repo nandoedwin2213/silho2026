@@ -43,8 +43,12 @@ function key(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+function usableOverride(value?: string | null) {
+  return value && (value.startsWith("/") || value.startsWith("https://")) ? value : null;
+}
+
 export function categoryImage(slug: string, override?: string | null) {
-  return override || CATEGORY_IMAGES[slug] || SITE_IMAGES.clinic;
+  return usableOverride(override) || CATEGORY_IMAGES[slug] || SITE_IMAGES.clinic;
 }
 
 export function serviceImage(service: { image?: string | null }, categorySlug: string) {
@@ -56,5 +60,5 @@ export function cityImage(city: string) {
 }
 
 export function blogImage(category: string, override?: string | null) {
-  return override || BLOG_IMAGES[key(category)] || SITE_IMAGES.consultation;
+  return usableOverride(override) || BLOG_IMAGES[key(category)] || SITE_IMAGES.consultation;
 }

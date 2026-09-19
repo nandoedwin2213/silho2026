@@ -85,3 +85,8 @@ export const landingConfigs: Record<string, LandingConfig> = {
   "medicina-estetica-guayaquil": { title: "Medicina estética en Guayaquil", intro: "Atención estética personalizada en Guayaquil, con valoración médica y opciones faciales, capilares y de rejuvenecimiento.", city: "Guayaquil" },
   "medicina-estetica-salinas": { title: "Medicina estética en Salinas", intro: "Atención estética personalizada en Salinas, con valoración médica y opciones faciales, capilares y de rejuvenecimiento.", city: "Salinas" },
 };
+
+export function cityLandingPath(city: string) {
+  const slug = "medicina-estetica-" + city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
+  return slug in landingConfigs ? `/${slug}` : "/contacto";
+}
