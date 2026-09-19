@@ -23,18 +23,18 @@ type ServiceSeed = {
 };
 
 const categorySeeds = [
-  ["Valoración", "valoracion", "Valoraciones médicas para orientar tu plan estético."],
-  ["Toxina botulínica", "toxina-botulinica", "Opciones de toxina botulínica según valoración médica."],
-  ["Ácido hialurónico", "acido-hialuronico", "Tratamientos con ácido hialurónico para armonización facial."],
-  ["Acné", "acne", "Opciones para conversar durante tu valoración de acné."],
-  ["Cicatrices de acné", "cicatrices-acne", "Tratamientos orientados a atenuar cicatrices y estimular remodelación."],
-  ["Rejuvenecimiento facial", "rejuvenecimiento-facial", "Alternativas de rejuvenecimiento facial personalizado."],
-  ["Medicina capilar", "medicina-capilar", "Valoración y seguimiento de salud capilar."],
-  ["Trasplante capilar", "trasplante-capilar", "Procedimientos capilares que requieren valoración médica previa."],
-  ["Blefaroplastia", "blefaroplastia", "Procedimientos perioculares sujetos a valoración médica."],
-  ["Rinoplastia", "rinoplastia", "Opciones nasales sujetas a valoración médica."],
-  ["Perfilamiento y armonización facial", "perfilamiento-facial", "Planes de armonización que comienzan con valoración."],
-  ["Otros procedimientos", "otros-procedimientos", "Catálogo administrable de opciones estéticas."],
+  ["Valoración", "valoracion", "Valoraciones médicas para orientar tu plan estético.", "/images/cat-valoracion.jpg"],
+  ["Toxina botulínica", "toxina-botulinica", "Opciones de toxina botulínica según valoración médica.", "/images/cat-toxina-botulinica.jpg"],
+  ["Ácido hialurónico", "acido-hialuronico", "Tratamientos con ácido hialurónico para armonización facial.", "/images/cat-acido-hialuronico.jpg"],
+  ["Acné", "acne", "Opciones para conversar durante tu valoración de acné.", "/images/cat-acne.jpg"],
+  ["Cicatrices de acné", "cicatrices-acne", "Tratamientos orientados a atenuar cicatrices y estimular remodelación.", "/images/cat-cicatrices-acne.jpg"],
+  ["Rejuvenecimiento facial", "rejuvenecimiento-facial", "Alternativas de rejuvenecimiento facial personalizado.", "/images/cat-rejuvenecimiento-facial.jpg"],
+  ["Medicina capilar", "medicina-capilar", "Valoración y seguimiento de salud capilar.", "/images/cat-medicina-capilar.jpg"],
+  ["Trasplante capilar", "trasplante-capilar", "Procedimientos capilares que requieren valoración médica previa.", "/images/cat-trasplante-capilar.jpg"],
+  ["Blefaroplastia", "blefaroplastia", "Procedimientos perioculares sujetos a valoración médica.", "/images/cat-blefaroplastia.jpg"],
+  ["Rinoplastia", "rinoplastia", "Opciones nasales sujetas a valoración médica.", "/images/cat-rinoplastia.jpg"],
+  ["Perfilamiento y armonización facial", "perfilamiento-facial", "Planes de armonización que comienzan con valoración.", "/images/cat-perfilamiento-facial.jpg"],
+  ["Otros procedimientos", "otros-procedimientos", "Catálogo administrable de opciones estéticas.", "/images/cat-otros-procedimientos.jpg"],
 ] as const;
 
 const simple = (category: string, names: string[], price: number): ServiceSeed[] =>
@@ -104,12 +104,191 @@ const concernRules: Record<string, (service: ServiceSeed) => boolean> = {
   Rejuvenecimiento: (service) => service.category === "rejuvenecimiento-facial" || hasName(service, ["Bioestimuladores", "PRP", "HIFU"]),
 };
 
+const blogSeeds = [
+  {
+    category: "Acné",
+    title: "Guía SILHO: Acné",
+    excerpt: "Una mirada general a los factores que se conversan al valorar el acné y las alternativas disponibles para cuidar la piel.",
+    coverImage: "/images/blog-acne.jpg",
+    publishedAt: new Date("2026-01-07T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+El acné es una condición frecuente de la piel que puede presentarse en distintas etapas de la vida. Puede incluir puntos negros, puntos blancos, pápulas, pústulas o lesiones más profundas. Su expresión cambia entre personas y también puede verse influida por hormonas, productos cosméticos, medicamentos, estrés y hábitos cotidianos. Observar el tipo de lesiones, su distribución y el tiempo de evolución ayuda a orientar una conversación médica.
+
+## ¿Para quién puede ser una opción?
+
+Una valoración puede ser útil para quienes desean entender mejor los brotes, revisar una rutina o conversar sobre alternativas médicas y de cuidado en casa. También puede ser un espacio para abordar manchas posteriores, sensibilidad o marcas. No existe una fórmula universal: la edad, los antecedentes, los productos utilizados y la respuesta previa forman parte de la historia clínica.
+
+## Qué esperar de la valoración
+
+Durante la cita se revisan objetivos, antecedentes y características visibles de la piel. El profesional puede explicar opciones como limpieza, peelings, microneedling, láser u otras alternativas cuando correspondan. La indicación se plantea de manera gradual y puede requerir seguimiento para observar la evolución y ajustar el plan.
+
+## Cuidados generales
+
+La limpieza suave, la hidratación adecuada y la fotoprotección suelen formar parte de una conversación de cuidado general. Evita manipular las lesiones y consulta antes de combinar activos o procedimientos. Lleva a la valoración una lista de productos y medicamentos relevantes. Registrar cuándo aparecen los brotes, qué zonas se repiten y cómo responde la piel a los productos puede hacer más útil la conversación. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Rejuvenecimiento",
+    title: "Guía SILHO: Rejuvenecimiento",
+    excerpt: "Conoce cómo se conversa sobre calidad de piel, textura y signos visibles del paso del tiempo durante una valoración.",
+    coverImage: "/images/blog-rejuvenecimiento.jpg",
+    publishedAt: new Date("2026-01-14T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+El rejuvenecimiento facial reúne distintas alternativas orientadas a acompañar cambios de textura, hidratación, tono y firmeza de la piel. No describe un único procedimiento ni un resultado predeterminado. Puede incluir hábitos de cuidado, tecnologías y tratamientos médicos, siempre seleccionados según la piel y los objetivos de cada persona.
+
+## ¿Para quién puede ser una opción?
+
+Puede interesar a quienes desean conversar sobre una rutina, mejorar la apariencia de la piel o comprender qué opciones existen para distintas zonas del rostro y cuello. Algunas personas buscan atender textura; otras quieren revisar hidratación o signos de fotoexposición. La valoración permite distinguir expectativas, antecedentes y prioridades antes de considerar cualquier alternativa.
+
+## Qué esperar de la valoración
+
+El profesional conversa sobre historia clínica, sensibilidad, exposición solar y procedimientos previos. También observa la piel y explica qué opciones pueden tener sentido, como bioestimuladores, PRP, skinboosters, radiofrecuencia, HIFU, peelings u otras. El plan puede ser escalonado y requiere comprender indicaciones, cuidados y controles.
+
+## Cuidados generales
+
+La fotoprotección diaria, la limpieza sin fricción y una hidratación compatible con tu piel son bases frecuentes. No combines productos irritantes ni suspendas medicamentos sin orientación. Comunica alergias, embarazo, lactancia o procedimientos recientes antes de una cita. También es útil anotar qué cambios te preocupan y qué productos has probado, sin suspender tratamientos indicados por otro profesional. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Ácido hialurónico",
+    title: "Guía SILHO: Ácido hialurónico",
+    excerpt: "Información general para conversar sobre ácido hialurónico, objetivos estéticos y la importancia de una indicación individual.",
+    coverImage: "/images/blog-acido-hialuronico.jpg",
+    publishedAt: new Date("2026-01-21T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+El ácido hialurónico es una sustancia utilizada en distintos contextos médicos y estéticos. En tratamientos faciales puede conversar sobre hidratación, soporte, proporción o armonización de determinadas zonas. Cada producto, técnica y área tiene características diferentes, por lo que el nombre general no permite anticipar qué se indicará ni cómo será un plan.
+
+## ¿Para quién puede ser una opción?
+
+Puede ser una alternativa para personas que desean revisar labios, pómulos, mentón, ojeras, surcos u otras áreas durante una consulta. También puede ser útil para quienes tienen dudas sobre productos previos o buscan una segunda conversación médica. Los antecedentes, la anatomía y las expectativas deben revisarse antes de definir si corresponde.
+
+## Qué esperar de la valoración
+
+La cita incluye una conversación sobre objetivos, antecedentes, alergias, medicamentos y procedimientos anteriores. El profesional explica opciones, límites, posibles efectos adversos y cuidados. La indicación puede ser no realizar el procedimiento, elegir otra alternativa o plantear un abordaje gradual. Las decisiones deben tomarse con información clara y espacio para preguntas.
+
+## Cuidados generales
+
+Comparte la información de cualquier procedimiento previo y evita ocultar medicamentos o condiciones relevantes. Sigue únicamente las instrucciones entregadas por el equipo tratante y consulta si aparece una reacción inesperada. No uses fotografías de referencia como una promesa de resultado. Una buena consulta también permite conversar sobre alternativas conservadoras, tiempos de revisión y las preguntas que necesitas resolver antes de decidir. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Botox",
+    title: "Guía SILHO: Toxina botulínica",
+    excerpt: "Una explicación general sobre las zonas que pueden conversarse y los factores que orientan una valoración de toxina botulínica.",
+    coverImage: "/images/blog-botox.jpg",
+    publishedAt: new Date("2026-01-28T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+La toxina botulínica es una herramienta médica que puede utilizarse en distintas zonas y situaciones, de acuerdo con una valoración. En estética facial, la conversación suele incluir movimiento muscular, expresión, proporciones y objetivos personales. No todas las líneas o zonas se abordan de la misma forma, y la técnica depende de la anatomía y del criterio clínico.
+
+## ¿Para quién puede ser una opción?
+
+Puede ser una alternativa para quienes desean conversar sobre frente, entrecejo, patas de gallo u otras áreas faciales. También existen usos que requieren una evaluación específica. La cita es importante para diferenciar objetivos estéticos, antecedentes neuromusculares, medicamentos y expectativas. No se recomienda elegir zonas de manera automática desde un catálogo.
+
+## Qué esperar de la valoración
+
+El profesional revisa gestos, simetrías, antecedentes y procedimientos previos. Explica qué puede plantearse, qué límites existen y qué cuidados son relevantes. La cantidad, técnica y áreas no deben definirse únicamente por una fotografía. En algunos casos puede recomendarse esperar, ajustar expectativas o considerar otra opción.
+
+## Cuidados generales
+
+Informa sobre medicamentos, alergias, embarazo, lactancia y tratamientos anteriores. Sigue las instrucciones posteriores del equipo médico y consulta cualquier síntoma que te preocupe. Evita comparar procesos individuales o asumir que una experiencia ajena se repetirá. Pregunta por la preparación, el seguimiento y las señales que deberían motivar una consulta, y toma la decisión con tiempo suficiente. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Capilar",
+    title: "Guía SILHO: Medicina capilar",
+    excerpt: "Aspectos generales de una valoración capilar y de las conversaciones posibles sobre caída, cuero cabelludo y seguimiento.",
+    coverImage: "/images/blog-capilar.jpg",
+    publishedAt: new Date("2026-02-04T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+La medicina capilar reúne la valoración del cabello y del cuero cabelludo, el análisis de antecedentes y el seguimiento de cambios a lo largo del tiempo. La caída puede tener causas diversas y presentarse de forma temporal o persistente. Por eso conviene revisar la historia, los medicamentos, los hábitos y las características del cuero cabelludo antes de hablar de opciones.
+
+## ¿Para quién puede ser una opción?
+
+Puede ser útil para quienes observan caída, cambios de densidad, picazón, descamación o modificaciones en la línea frontal. También puede interesar a quienes desean revisar un plan anticaída o documentar su evolución. La tricoscopía, fotografías clínicas y otras herramientas pueden formar parte de la conversación si el profesional las considera pertinentes.
+
+## Qué esperar de la valoración
+
+La cita permite ordenar antecedentes, objetivos y tratamientos previos. El profesional puede conversar sobre PRP capilar, microneedling, mesoterapia, seguimiento fotográfico u otras alternativas, sin asumir que todas son adecuadas para cada persona. El plan puede incluir controles y ajustes según la evolución observada.
+
+## Cuidados generales
+
+Evita iniciar suplementos o medicamentos por cuenta propia. Comunica cambios recientes, antecedentes familiares y productos utilizados. Trata el cuero cabelludo con suavidad y consulta si aparecen lesiones, dolor o inflamación. Las fotografías comparables ayudan a observar cambios, pero no sustituyen una revisión clínica. Llevar una cronología de la caída y de los productos utilizados puede ayudar a ordenar la consulta y definir qué seguimiento sería razonable. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Cicatrices",
+    title: "Guía SILHO: Cicatrices de acné",
+    excerpt: "Información para entender los tipos de cicatrices de acné y las alternativas que pueden conversarse durante una valoración.",
+    coverImage: "/images/blog-cicatrices.jpg",
+    publishedAt: new Date("2026-02-11T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+Las cicatrices de acné son cambios persistentes que pueden variar en profundidad, color y textura. Entre las formas que suelen describirse están las ice pick, boxcar y rolling. También pueden coexistir manchas posteriores y brotes activos. Identificar cada componente ayuda a conversar sobre objetivos realistas y sobre el orden en que podrían abordarse.
+
+## ¿Para quién puede ser una opción?
+
+Una valoración puede servir a quienes desean mejorar o atenuar la apariencia de cicatrices, revisar tratamientos previos o entender por qué una zona tiene una textura distinta. La piel, la actividad del acné, la sensibilidad y los antecedentes influyen en las alternativas. No se promete eliminación completa ni una respuesta idéntica entre personas.
+
+## Qué esperar de la valoración
+
+El profesional revisa el tipo de cicatriz y puede conversar sobre subcisión, microneedling, láser CO2, peelings, bioestimulación, PRP u otras opciones. A veces se propone una combinación o una secuencia de sesiones. La indicación debe considerar recuperación, riesgos, cuidados y la posibilidad de ajustar el plan.
+
+## Cuidados generales
+
+La fotoprotección ayuda a cuidar el tono y debe acompañar cualquier conversación sobre procedimientos. No manipules lesiones activas ni combines exfoliantes sin orientación. Informa si tienes antecedentes de cicatrización particular o sensibilidad. Pregunta por la preparación, los intervalos entre sesiones y la forma de controlar la evolución, y evita tomar decisiones basadas solo en una imagen comparativa. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Láser",
+    title: "Guía SILHO: Láser CO2",
+    excerpt: "Una introducción general a la conversación médica sobre láser CO2, piel, recuperación y cuidados.",
+    coverImage: "/images/blog-laser.jpg",
+    publishedAt: new Date("2026-02-18T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+El láser CO2 es una tecnología que puede utilizarse en distintos protocolos de cuidado de la piel. La profundidad, energía, zona y objetivo cambian según la indicación. No todos los equipos ni todas las sesiones son equivalentes. Una valoración permite explicar qué se busca abordar y si la tecnología es compatible con las características de la piel.
+
+## ¿Para quién puede ser una opción?
+
+Puede conversarse para textura, cicatrices, fotoenvejecimiento u otras preocupaciones seleccionadas. La piel activa, ciertas condiciones, medicamentos y la exposición solar pueden modificar la recomendación. La decisión no debe basarse únicamente en fotografías de resultados ajenos ni en la idea de que una tecnología sirve para todos los casos.
+
+## Qué esperar de la valoración
+
+El profesional revisa antecedentes, sensibilidad, fototipo, tratamientos recientes y expectativas. Explica preparación, recuperación, cuidados y señales de alerta. Puede recomendar otra alternativa o posponer el procedimiento si existen factores que conviene controlar primero. La información debe incluir límites y posibles efectos adversos.
+
+## Cuidados generales
+
+La fotoprotección y el cumplimiento de las indicaciones posteriores son fundamentales. Evita exponerte al sol o aplicar productos no autorizados durante la recuperación. Comunica cambios en la piel y consulta si aparece una reacción que no esperabas. Antes de agendar, confirma qué productos debes suspender, cuánto seguimiento se contempla y qué cuidados son compatibles con tu rutina diaria. La indicación depende de una valoración médica individual.`,
+  },
+  {
+    category: "Armonización facial",
+    title: "Guía SILHO: Armonización facial",
+    excerpt: "Cómo abordar una conversación de armonización facial desde objetivos personales, proporciones y una valoración médica.",
+    coverImage: "/images/blog-armonizacion-facial.jpg",
+    publishedAt: new Date("2026-02-25T12:00:00.000Z"),
+    content: `## ¿Qué es?
+
+La armonización facial describe un enfoque de conversación sobre proporciones, balance y características del rostro. No es un procedimiento único ni una recomendación automática. Puede incluir distintas zonas y herramientas, pero cada decisión requiere comprender la anatomía, los objetivos y los límites de una intervención. La naturalidad y la individualidad deben formar parte de la conversación.
+
+## ¿Para quién puede ser una opción?
+
+Puede interesar a quienes desean revisar perfil, labios, mentón, mandíbula, pómulos, nariz u otras áreas. Algunas personas buscan entender qué les gustaría cambiar; otras quieren revisar un tratamiento previo. La valoración ayuda a ordenar prioridades y a distinguir entre lo que es posible conversar, lo que requiere otra especialidad y lo que conviene no realizar.
+
+## Qué esperar de la valoración
+
+El profesional escucha tus objetivos, revisa antecedentes y observa proporciones y movimiento. Puede explicar opciones como ácido hialurónico, toxina botulínica u otras alternativas, junto con riesgos, cuidados y límites. No se deben recomendar paquetes de manera automática: el plan, si existe, se construye de forma individual.
+
+## Cuidados generales
+
+Lleva información de procedimientos previos y comunica alergias, medicamentos y condiciones relevantes. Usa referencias visuales solo para explicar una preferencia, no como promesa. Tómate el tiempo para preguntar y decidir. Lleva referencias que expliquen tus preferencias, pero permite que el criterio clínico guíe la conversación sobre proporciones, seguridad, alternativas y seguimiento. La indicación depende de una valoración médica individual.`,
+  },
+];
+
 async function main() {
-  for (const [order, [name, slug, description]] of categorySeeds.entries()) {
+  for (const [order, [name, slug, description, image]] of categorySeeds.entries()) {
     await prisma.category.upsert({
       where: { slug },
-      update: { name, description, order, active: true },
-      create: { name, slug, description, order },
+      update: { name, description, image, order, active: true },
+      create: { name, slug, description, image, order },
     });
   }
 
@@ -218,13 +397,15 @@ async function main() {
     await prisma.subscriptionPlan.upsert({ where: { slug }, update: { name, price, order, active: true, interval: "MONTH" }, create: { name, slug, price, order, interval: "MONTH" } });
   }
 
-  const blogCategories = ["Acné", "Rejuvenecimiento", "Ácido hialurónico", "Botox", "Capilar", "Cicatrices", "Láser", "Armonización facial"];
-  for (const category of blogCategories) {
-    const slug = slugify(category);
+  for (const post of blogSeeds) {
+    const slug = slugify(post.category);
+    const closing = "La indicación depende de una valoración médica individual.";
+    const closingIndex = post.content.lastIndexOf(closing);
+    const content = `${post.content.slice(0, closingIndex)}La consulta también permite ordenar prioridades, resolver dudas sobre preparación y seguimiento, conocer límites del plan y decidir qué información llevar al equipo médico antes de tomar una decisión. ${closing}`;
     await prisma.blogPost.upsert({
       where: { slug: `guia-${slug}` },
-      update: { title: `Guía SILHO: ${category}`, excerpt: `Información general sobre ${category.toLowerCase()}.`, content: `## ${category}\n\nConversa con nuestro equipo durante una valoración personalizada.`, category, published: true, publishedAt: new Date() },
-      create: { slug: `guia-${slug}`, title: `Guía SILHO: ${category}`, excerpt: `Información general sobre ${category.toLowerCase()}.`, content: `## ${category}\n\nConversa con nuestro equipo durante una valoración personalizada.`, category, published: true, publishedAt: new Date() },
+      update: { title: post.title, excerpt: post.excerpt, content, category: post.category, coverImage: post.coverImage, published: true, publishedAt: post.publishedAt },
+      create: { slug: `guia-${slug}`, title: post.title, excerpt: post.excerpt, content, category: post.category, coverImage: post.coverImage, published: true, publishedAt: post.publishedAt },
     });
   }
 

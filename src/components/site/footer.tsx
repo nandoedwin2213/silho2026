@@ -31,7 +31,7 @@ export function Footer({ locations, settings }: FooterProps) {
           </nav>
         </div>
       </div>
-      <div className="border-t border-border px-6 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} SILHO. Todos los derechos reservados.</div>
+      <div className="border-t border-border px-6 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} SILHO. Todos los derechos reservados. <a href="https://unsplash.com/license" target="_blank" rel="noreferrer" className="transition hover:text-navy">Fotografías: Unsplash</a></div>
     </footer>
   );
 }
