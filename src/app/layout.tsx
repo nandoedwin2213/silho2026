@@ -6,6 +6,8 @@ import { getSettings } from "@/lib/settings";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
 import { WhatsAppButton } from "@/components/site/whatsapp-button";
+import { Toaster } from "@/components/ui/sonner";
+import { getSession } from "@/lib/auth";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -38,14 +40,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [locations, settings] = await Promise.all([
     db.location.findMany({ where: { active: true }, orderBy: { order: "asc" }, select: { name: true, city: true, address: true } }),
     getSettings(["WHATSAPP_NUMBER", "INSTAGRAM_URL", "TIKTOK_URL", "FACEBOOK_URL"]),
   ]);
+  const adminSession = await getSession();
   return (
     <html lang="es" className={`${manrope.variable} ${sora.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col"><Header /><div className="flex-1">{children}</div><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593999999999"} /></body>
+      <body className="min-h-full flex flex-col">{!adminSession && <Header />}<div className="flex-1">{children}</div>{!adminSession && <><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593999999999"} /></>}<Toaster /></body>
     </html>
   );
 }

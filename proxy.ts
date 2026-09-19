@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/admin/login") return NextResponse.next();
+  if (request.method === "POST" && request.headers.has("next-action")) return NextResponse.next();
   const token = request.cookies.get("silho-admin-session")?.value;
   if (!token) return NextResponse.redirect(new URL("/admin/login", request.url));
   try {

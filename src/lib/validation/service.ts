@@ -17,4 +17,5 @@ export const serviceAdminSchema = z.object({
   featured: z.boolean().default(false),
   durationMinutes: z.coerce.number().int().positive().optional(),
   image: z.string().url().optional().or(z.literal("")),
+  concerns: z.array(z.string()).default([]),
 });

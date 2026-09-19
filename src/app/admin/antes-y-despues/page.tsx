@@ -1,0 +1,10 @@
+import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
+import { AdminHeading } from "../_components";
+import { saveBeforeAfterAction } from "../actions";
+
+export default async function BeforeAfterPage() {
+  await requireAdmin();
+  const records = await db.beforeAfter.findMany({ orderBy: { createdAt: "desc" }, include: { service: true } });
+  return <><AdminHeading title="Antes y después" /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="rounded-2xl border bg-white p-5 shadow-sm"><table className="w-full text-sm"><thead><tr className="border-b text-left text-muted-foreground"><th className="p-3">Título</th><th className="p-3">Servicio</th><th className="p-3">Consentimiento</th><th className="p-3">Publicado</th></tr></thead><tbody>{records.map((record) => <tr key={record.id} className="border-b"><td className="p-3">{record.title}</td><td className="p-3">{record.service?.name ?? "—"}</td><td className="p-3">{record.patientConsent ? "Sí" : "No"}</td><td className="p-3">{record.published ? "Sí" : "No"}</td></tr>)}</tbody></table></div><form action={saveBeforeAfterAction} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm"><h2 className="font-heading text-xl text-navy">Nuevo registro</h2><input name="title" required placeholder="Título" className="h-9 w-full rounded-lg border px-3 text-sm" /><input name="beforeImage" type="url" required placeholder="URL imagen antes" className="h-9 w-full rounded-lg border px-3 text-sm" /><input name="afterImage" type="url" required placeholder="URL imagen después" className="h-9 w-full rounded-lg border px-3 text-sm" /><textarea name="description" placeholder="Descripción" className="w-full rounded-lg border p-3 text-sm" /><label className="flex gap-2 text-sm"><input type="checkbox" name="patientConsent" value="true" required /> Consentimiento del paciente</label><label className="flex gap-2 text-sm"><input type="checkbox" name="published" value="true" /> Publicado</label><button className="rounded-full bg-navy px-5 py-2 text-sm font-semibold text-white">Guardar</button></form></div></>;
+}
