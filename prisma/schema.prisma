@@ -1,0 +1,335 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LeadSource {
+  WEB
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  GOOGLE
+  REFERRAL
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  APPOINTMENT
+  CONVERTED
+  LOST
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  PAYPHONE
+  TRANSFER
+  CASH
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  ERROR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  PAST_DUE
+  CANCELLED
+  PAUSED
+}
+
+enum Role {
+  ADMIN
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  order       Int
+  active      Boolean   @default(true)
+  image       String?
+  services    Service[]
+
+  @@map("categories")
+}
+
+model Service {
+  id                        String           @id @default(cuid())
+  name                      String
+  slug                      String           @unique
+  categoryId                String           @map("category_id")
+  category                  Category         @relation(fields: [categoryId], references: [id])
+  description               String
+  shortDescription          String           @map("short_description")
+  basePrice                 Decimal          @db.Decimal(10, 2) @map("base_price")
+  priceFrom                 Boolean          @default(true) @map("price_from")
+  showPrice                 Boolean          @default(true) @map("show_price")
+  discountEligible          Boolean          @default(true) @map("discount_eligible")
+  requiresMedicalAssessment Boolean          @default(false) @map("requires_medical_assessment")
+  requiresManualQuote       Boolean          @default(false) @map("requires_manual_quote")
+  isSurgical                Boolean          @default(false) @map("is_surgical")
+  active                    Boolean          @default(true)
+  featured                  Boolean          @default(false)
+  durationMinutes           Int?             @map("duration_minutes")
+  image                     String?
+  createdAt                 DateTime         @default(now()) @map("created_at")
+  updatedAt                 DateTime         @updatedAt @map("updated_at")
+  concerns                  ServiceConcern[]
+  appointments              Appointment[]
+  orders                    Order[]
+  beforeAfter               BeforeAfter[]
+
+  @@map("services")
+}
+
+model Concern {
+  id       String           @id @default(cuid())
+  name     String
+  slug     String           @unique
+  order    Int
+  services ServiceConcern[]
+
+  @@map("concerns")
+}
+
+model ServiceConcern {
+  serviceId String  @map("service_id")
+  concernId String  @map("concern_id")
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  concern  Concern @relation(fields: [concernId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, concernId])
+  @@map("service_concerns")
+}
+
+model Location {
+  id      String  @id @default(cuid())
+  name    String
+  city    String
+  address String
+  phone   String?
+  mapsUrl String? @map("maps_url")
+  active  Boolean @default(true)
+  order   Int
+
+  appointments Appointment[]
+
+  @@map("locations")
+}
+
+model Professional {
+  id             String  @id @default(cuid())
+  name           String
+  title          String
+  bio            String
+  photo          String?
+  education      Json?
+  experience     Json?
+  certifications Json?
+  publications   Json?
+  procedures     Json?
+  socials        Json?
+  active         Boolean @default(true)
+
+  appointments Appointment[]
+
+  @@map("professionals")
+}
+
+model Patient {
+  id            String        @id @default(cuid())
+  firstName     String        @map("first_name")
+  lastName      String        @map("last_name")
+  documentId    String        @unique @map("document_id")
+  email         String
+  phone         String
+  city          String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  appointments  Appointment[]
+  orders        Order[]
+  subscriptions Subscription[]
+
+  @@map("patients")
+}
+
+model Lead {
+  id               String     @id @default(cuid())
+  name             String
+  phone            String
+  email            String?
+  interestedService String?   @map("interested_service")
+  source           LeadSource
+  status           LeadStatus @default(NEW)
+  notes            String?
+  createdAt        DateTime   @default(now()) @map("created_at")
+
+  @@map("leads")
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  patientId      String            @map("patient_id")
+  serviceId      String            @map("service_id")
+  locationId     String            @map("location_id")
+  professionalId String            @map("professional_id")
+  date           DateTime
+  status         AppointmentStatus @default(REQUESTED)
+  notes          String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  patient        Patient           @relation(fields: [patientId], references: [id])
+  service        Service           @relation(fields: [serviceId], references: [id])
+  location       Location          @relation(fields: [locationId], references: [id])
+  professional   Professional      @relation(fields: [professionalId], references: [id])
+  orders         Order[]
+
+  @@map("appointments")
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  patientId       String        @map("patient_id")
+  serviceId       String        @map("service_id")
+  appointmentId   String?       @map("appointment_id")
+  basePrice       Decimal       @db.Decimal(10, 2) @map("base_price")
+  discountPercent Decimal       @db.Decimal(5, 2) @map("discount_percent")
+  discountAmount  Decimal       @db.Decimal(10, 2) @map("discount_amount")
+  total           Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  paymentMethod   PaymentMethod @map("payment_method")
+  status          OrderStatus   @default(PENDING)
+  acceptedTerms   Boolean       @map("accepted_terms")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  service         Service       @relation(fields: [serviceId], references: [id])
+  appointment     Appointment?  @relation(fields: [appointmentId], references: [id])
+  payments        Payment[]
+
+  @@map("orders")
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  orderId               String        @map("order_id")
+  provider              String
+  providerTransactionId String?       @map("provider_transaction_id")
+  clientTransactionId   String        @unique @map("client_transaction_id")
+  amount                Decimal       @db.Decimal(10, 2)
+  status                PaymentStatus @default(PENDING)
+  rawResponse           Json?         @map("raw_response")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  order                 Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  price         Decimal        @db.Decimal(10, 2)
+  interval      String         @default("MONTH")
+  description   String?
+  active        Boolean        @default(true)
+  order         Int
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  patientId          String             @map("patient_id")
+  planId             String             @map("plan_id")
+  status             SubscriptionStatus @default(PENDING)
+  provider           String
+  providerCustomerId String?            @map("provider_customer_id")
+  providerToken      String?            @map("provider_token")
+  startDate          DateTime           @default(now()) @map("start_date")
+  nextBillingDate    DateTime?          @map("next_billing_date")
+  lastBillingDate    DateTime?          @map("last_billing_date")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  patient            Patient            @relation(fields: [patientId], references: [id])
+  plan               SubscriptionPlan   @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+model BeforeAfter {
+  id            String   @id @default(cuid())
+  title         String
+  serviceId     String?  @map("service_id")
+  beforeImage   String   @map("before_image")
+  afterImage    String   @map("after_image")
+  patientConsent Boolean @map("patient_consent")
+  description   String?
+  published     Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  service       Service? @relation(fields: [serviceId], references: [id])
+
+  @@map("before_afters")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String
+  content     String
+  category    String
+  coverImage  String?   @map("cover_image")
+  published   Boolean   @default(false)
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
