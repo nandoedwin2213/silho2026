@@ -8,7 +8,6 @@ QUERIES = {
     "hero": "elegant woman face skin beauty portrait natural light",
     "clinic": "modern aesthetic clinic interior",
     "consultation": "doctor consultation patient medical office",
-    "doctor": "doctor stethoscope white coat portrait clinic",
     "agenda": "receptionist clinic calendar appointment",
     "membresias": "spa wellness towels candles",
     "quito": "Quito Ecuador city",
