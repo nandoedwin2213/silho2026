@@ -48,7 +48,7 @@ export async function getPointsSummary(patientId: string) {
   const tier = [...TIERS].reverse().find((entry) => earned12m >= entry.min)?.tier ?? "ESSENTIAL";
   const next = TIERS.find((entry) => entry.min > earned12m);
   const soon = new Date(now);
-  soon.setDate(soon.getDate() + 30);
+  soon.setDate(soon.getDate() + 60);
   const expiringSoon = transactions
     .filter((transaction) => transaction.points > 0 && transaction.expiresAt && transaction.expiresAt <= soon)
     .map((transaction) => ({ points: transaction.points, expiresAt: transaction.expiresAt as Date }));

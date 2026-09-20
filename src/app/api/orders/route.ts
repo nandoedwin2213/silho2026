@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
-import { getPromptPaymentDiscount, priceBreakdown } from "@/lib/pricing";
+import { getWebDiscountFor, priceBreakdown } from "@/lib/pricing";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validation/checkout";
 import { isPurchasable } from "@/lib/services";
+import { getPatientSession } from "@/lib/patient-auth";
+import { computeMaxRedeemable, pointsToUsd } from "@/lib/rewards";
+import { getSettings } from "@/lib/settings";
 
 export async function POST(request: Request) {
   const limited = rateLimit(`order:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -14,12 +17,34 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const service = await db.service.findFirst({ where: { id: input.serviceId, active: true } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
-  const discount = await getPromptPaymentDiscount();
-  const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible);
-  const order = await db.$transaction(async (tx) => {
-    const patient = await tx.patient.upsert({ where: { documentId: input.documentId }, update: {}, create: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: input.ciudad } });
-    return tx.order.create({ data: { patientId: patient.id, serviceId: service.id, basePrice: breakdown.base, discountPercent: breakdown.discountPercent, discountAmount: breakdown.savings, total: breakdown.discounted, paymentMethod: input.paymentMethod, acceptedTerms: input.acceptTerms } });
-  });
+  const session = await getPatientSession();
+  const discount = input.paymentMethod === "PAYPHONE" ? await getWebDiscountFor(service) : 0;
+  const settings = await getSettings(["REWARDS_MAX_REDEEM_PERCENT", "REWARDS_POINT_VALUE_USD"]);
+  const pointValue = Number(settings.REWARDS_POINT_VALUE_USD ?? "0.05");
+  const regularBreakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible);
+  const maxPoints = session ? computeMaxRedeemable((await db.pointsTransaction.findMany({ where: { patientId: session.patientId, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }, { points: { lt: 0 } }] }, select: { points: true } })).reduce((sum, item) => sum + item.points, 0), regularBreakdown.discounted, Number(settings.REWARDS_MAX_REDEEM_PERCENT ?? "20"), pointValue) : 0;
+  if (input.pointsRedeemed > maxPoints) return NextResponse.json({ error: "La cantidad de puntos supera el máximo permitido." }, { status: 400 });
+  const pointsDiscount = pointsToUsd(input.pointsRedeemed, pointValue);
+  const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible, pointsDiscount);
+  let order;
+  try {
+    order = await db.$transaction(async (tx) => {
+    let patient = session ? await tx.patient.findUnique({ where: { id: session.patientId } }) : await tx.patient.findUnique({ where: { documentId: input.documentId } });
+    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: input.ciudad } });
+    if (!patient) throw new Error("Paciente no encontrado.");
+    if (input.referralCode) {
+      const referrer = await tx.patientAccount.findUnique({ where: { referralCode: input.referralCode.toUpperCase() } });
+      if (!referrer || referrer.patientId === patient.id) throw new Error("El código de referido no es válido.");
+    }
+    const currentPoints = (await tx.pointsTransaction.findMany({ where: { patientId: patient.id, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }, { points: { lt: 0 } }] }, select: { points: true } })).reduce((sum, item) => sum + item.points, 0);
+    if (input.pointsRedeemed > computeMaxRedeemable(currentPoints, regularBreakdown.discounted, Number(settings.REWARDS_MAX_REDEEM_PERCENT ?? "20"), pointValue)) throw new Error("La cantidad de puntos supera el máximo permitido.");
+    const order = await tx.order.create({ data: { patientId: patient.id, serviceId: service.id, basePrice: breakdown.base, discountPercent: breakdown.discountPercent, discountAmount: breakdown.base - breakdown.discounted, pointsRedeemed: input.pointsRedeemed, pointsDiscount, referralCode: input.referralCode?.toUpperCase(), total: breakdown.discounted, paymentMethod: input.paymentMethod, acceptedTerms: input.acceptTerms, channel: "WEB" } });
+    if (input.pointsRedeemed > 0) await tx.pointsTransaction.create({ data: { patientId: patient.id, points: -input.pointsRedeemed, reason: "REDEMPTION", description: `Canje aplicado a la orden ${order.id}`, orderId: order.id } });
+    return order;
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "No pudimos crear la orden." }, { status: 400 });
+  }
   if (input.paymentMethod !== "PAYPHONE") return NextResponse.json({ orderId: order.id, status: "PENDING" });
   const provider = getPaymentProvider("payphone");
   if (!provider) return NextResponse.json({ orderId: order.id, status: "PENDING_CONFIGURATION" });

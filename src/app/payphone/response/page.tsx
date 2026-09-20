@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { toPaymentStatus } from "@/lib/payments/status";
@@ -20,6 +21,8 @@ export default async function PayphoneResponsePage({ searchParams }: { searchPar
         result = "Tu pago fue aprobado y tu solicitud está confirmada.";
       } else if (confirmation.status === "PENDING_CONFIGURATION") result = "Pago en línea en configuración — te contactaremos para completar el pago.";
       else result = "No pudimos aprobar el pago. Te contactaremos para ayudarte.";
+      const linkedOrder = await db.order.findUnique({ where: { id: payment.orderId }, select: { appointmentId: true } });
+      if (linkedOrder?.appointmentId) redirect(`/reservar/gracias/${linkedOrder.appointmentId}?pago=${paymentStatus === "APPROVED" ? "aprobado" : paymentStatus === "PENDING" ? "pendiente" : "rechazado"}`);
     }
   }
   return <main className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center"><p className="text-sm uppercase tracking-[0.25em] text-gold">SILHO</p><h1 className="mt-4 font-heading text-4xl text-navy">Resultado de tu pago</h1><p className="mt-4 text-muted-foreground">{result}</p><Link href="/" className="mt-8 rounded-full bg-navy px-5 py-3 text-sm font-semibold text-white">Volver al inicio</Link></main>;

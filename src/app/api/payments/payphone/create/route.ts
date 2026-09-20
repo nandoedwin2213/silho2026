@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validation/checkout";
-import { getPromptPaymentDiscount, priceBreakdown } from "@/lib/pricing";
+import { getWebDiscountFor, priceBreakdown } from "@/lib/pricing";
 import { isPurchasable } from "@/lib/services";
 import { toPaymentStatus } from "@/lib/payments/status";
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     update: {},
     create: { firstName: parsed.data.nombre, lastName: parsed.data.apellido, documentId: parsed.data.documentId, email: parsed.data.email, phone: parsed.data.telefono, city: parsed.data.ciudad },
   });
-  const discount = await getPromptPaymentDiscount();
+  const discount = await getWebDiscountFor(service);
   const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible);
   const clientTransactionId = randomUUID();
   const order = await db.order.create({

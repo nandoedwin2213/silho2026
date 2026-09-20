@@ -1,0 +1,126 @@
+import bcrypt from "bcryptjs";
+import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "./db";
+import { generateReferralCode } from "./rewards";
+import { rateLimit } from "./rate-limit";
+import { accountLoginSchema, accountRegistrationSchema } from "./validation/account";
+import { getAuthSecret } from "./auth-secret";
+
+export const patientCookieName = "silho-patient-session";
+const sessionDuration = 60 * 60 * 24 * 30;
+const secret = () => new TextEncoder().encode(getAuthSecret());
+
+type RegistrationInput = {
+  firstName: string;
+  lastName: string;
+  documentId: string;
+  email: string;
+  phone: string;
+  city?: string;
+  password: string;
+  referralCode?: string;
+};
+
+export async function registerPatient(input: RegistrationInput) {
+  const parsed = accountRegistrationSchema.parse(input);
+  const normalizedEmail = parsed.email.toLowerCase();
+  const limited = rateLimit(`patient-register:${normalizedEmail}`, 5);
+  if (!limited.success) throw new Error("Demasiadas solicitudes. Inténtelo nuevamente más tarde.");
+  const existingAccount = await db.patientAccount.findUnique({ where: { email: normalizedEmail } });
+  if (existingAccount) throw new Error("Ya existe una cuenta con este correo.");
+
+  const result = await db.$transaction(async (tx) => {
+    let patient = await tx.patient.findUnique({ where: { documentId: parsed.documentId } });
+    if (!patient) {
+      patient = await tx.patient.create({
+        data: {
+          firstName: parsed.firstName,
+          lastName: parsed.lastName,
+          documentId: parsed.documentId,
+          email: normalizedEmail,
+          phone: parsed.phone,
+          city: parsed.city || null,
+        },
+      });
+    } else {
+      const updates: { email?: string; phone?: string; city?: string } = {};
+      if (!patient.email) updates.email = normalizedEmail;
+      if (!patient.phone) updates.phone = parsed.phone;
+      if (!patient.city && parsed.city) updates.city = parsed.city;
+      if (Object.keys(updates).length > 0) patient = await tx.patient.update({ where: { id: patient.id }, data: updates });
+      if (await tx.patientAccount.findUnique({ where: { patientId: patient.id } })) throw new Error("Este paciente ya tiene una cuenta.");
+    }
+
+    let referredById: string | undefined;
+    if (parsed.referralCode) {
+      const referrer = await tx.patientAccount.findUnique({ where: { referralCode: parsed.referralCode.toUpperCase() } });
+      if (!referrer) throw new Error("El código de referido no es válido.");
+      if (referrer.patientId === patient.id) throw new Error("No puede usar su propio código de referido.");
+      referredById = referrer.id;
+    }
+
+    const account = await tx.patientAccount.create({
+      data: {
+        patientId: patient.id,
+        email: normalizedEmail,
+        passwordHash: await bcrypt.hash(parsed.password, 12),
+        referralCode: generateReferralCode(parsed.firstName),
+        referredById,
+      },
+    });
+    return { account, patient };
+  });
+
+  await setPatientSession({ accountId: result.account.id, patientId: result.patient.id, email: result.account.email });
+  return result;
+}
+
+export async function loginPatient(email: string, password: string) {
+  const parsed = accountLoginSchema.parse({ email, password });
+  const limited = rateLimit(`patient-login:${parsed.email.toLowerCase()}`, 8);
+  if (!limited.success) throw new Error("Demasiados intentos. Inténtelo nuevamente más tarde.");
+  const account = await db.patientAccount.findUnique({ where: { email: parsed.email.toLowerCase() } });
+  if (!account || !(await bcrypt.compare(parsed.password, account.passwordHash))) throw new Error("Correo o contraseña incorrectos.");
+  await setPatientSession({ accountId: account.id, patientId: account.patientId, email: account.email });
+  return account;
+}
+
+async function setPatientSession(payload: { accountId: string; patientId: string; email: string }) {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(secret());
+  (await cookies()).set(patientCookieName, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: sessionDuration,
+    path: "/",
+  });
+}
+
+export async function getPatientSession() {
+  const token = (await cookies()).get(patientCookieName)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret());
+    if (typeof payload.patientId !== "string" || typeof payload.accountId !== "string") return null;
+    return { patientId: payload.patientId, accountId: payload.accountId, email: typeof payload.email === "string" ? payload.email : "" };
+  } catch {
+    return null;
+  }
+}
+
+export async function requirePatient() {
+  const session = await getPatientSession();
+  if (!session) redirect("/cuenta/ingresar");
+  return session;
+}
+
+export async function logoutPatient() {
+  (await cookies()).delete(patientCookieName);
+  redirect("/cuenta/ingresar");
+}
