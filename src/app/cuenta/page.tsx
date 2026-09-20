@@ -13,7 +13,7 @@ export default async function AccountPage() {
   const [patient, account, appointments, orders, summary, rewards] = await Promise.all([
     db.patient.findUnique({ where: { id: session.patientId }, select: { firstName: true, lastName: true } }),
     db.patientAccount.findFirst({ where: { id: session.accountId, patientId: session.patientId }, select: { referralCode: true } }),
-    db.appointment.findMany({ where: { patientId: session.patientId }, orderBy: { date: "asc" }, take: 5, include: { service: true, location: true } }),
+    db.appointment.findMany({ where: { patientId: session.patientId, date: { gte: new Date() }, status: { notIn: ["CANCELLED"] } }, orderBy: { date: "asc" }, take: 5, include: { service: true, location: true } }),
     db.order.findMany({ where: { patientId: session.patientId }, orderBy: { createdAt: "desc" }, take: 5, include: { service: true } }),
     getPointsSummary(session.patientId),
     db.reward.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
