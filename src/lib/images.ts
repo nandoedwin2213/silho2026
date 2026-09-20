@@ -63,6 +63,70 @@ export const SERVICE_TOPIC_IMAGES: Record<string, string> = {
   capilar: "/images/svc-capilar.jpg",
 };
 
+export const SERVICE_IMAGES: Record<string, string> = {
+  "toxina-botulinica-menton-empedrado": "/images/svc-toxina-botulinica-menton-empedrado.jpg",
+  "acido-hialuronico-mandibula": "/images/svc-acido-hialuronico-mandibula.jpg",
+  "perfilamiento-facial-jawline": "/images/svc-perfilamiento-facial-jawline.jpg",
+  "perfilamiento-facial-menton": "/images/svc-perfilamiento-facial-menton.jpg",
+  "perfilamiento-facial-perfil-mandibular": "/images/svc-perfilamiento-facial-perfil-mandibular.jpg",
+  "perfilamiento-facial-perfilamiento-mandibular": "/images/svc-perfilamiento-facial-perfilamiento-mandibular.jpg",
+  "acne-peeling-de-fenol-superficial": "/images/svc-acne-peeling-de-fenol-superficial.jpg",
+  "acne-peeling-quimico": "/images/svc-acne-peeling-quimico.jpg",
+  "cicatrices-acne-peeling-de-fenol": "/images/svc-cicatrices-acne-peeling-de-fenol.jpg",
+  "cicatrices-acne-peeling-quimico": "/images/svc-cicatrices-acne-peeling-quimico.jpg",
+  "cicatrices-acne-tca-cross": "/images/svc-cicatrices-acne-tca-cross.jpg",
+  "acne-control-de-piel-grasa": "/images/svc-acne-control-de-piel-grasa.jpg",
+  "acne-programa-silho-acne-1-mes": "/images/svc-acne-programa-silho-acne-1-mes.jpg",
+  "acne-programa-silho-acne-3-meses": "/images/svc-acne-programa-silho-acne-3-meses.jpg",
+  "acne-programa-silho-acne-6-meses": "/images/svc-acne-programa-silho-acne-6-meses.jpg",
+  "acne-seguimiento-mensual": "/images/svc-acne-seguimiento-mensual.jpg",
+  "acne-tratamiento-combinado-de-acne": "/images/svc-acne-tratamiento-combinado-de-acne.jpg",
+  "acne-dermapen": "/images/svc-acne-dermapen.jpg",
+  "cicatrices-acne-microneedling": "/images/svc-cicatrices-acne-microneedling.jpg",
+  "rejuvenecimiento-facial-dermapen": "/images/svc-rejuvenecimiento-facial-dermapen.jpg",
+  "rejuvenecimiento-facial-microneedling": "/images/svc-rejuvenecimiento-facial-microneedling.jpg",
+  "rejuvenecimiento-facial-botox": "/images/svc-rejuvenecimiento-facial-botox.jpg",
+  "rejuvenecimiento-facial-hifu": "/images/svc-rejuvenecimiento-facial-hifu.jpg",
+  "rejuvenecimiento-facial-radiofrecuencia": "/images/svc-rejuvenecimiento-facial-radiofrecuencia.jpg",
+  "rejuvenecimiento-facial-radiofrecuencia-fraccionada": "/images/svc-rejuvenecimiento-facial-radiofrecuencia-fraccionada.jpg",
+  "rejuvenecimiento-facial-acido-hialuronico": "/images/svc-rejuvenecimiento-facial-acido-hialuronico.jpg",
+  "perfilamiento-facial-feminizacion": "/images/svc-perfilamiento-facial-feminizacion.jpg",
+  "perfilamiento-facial-masculinizacion": "/images/svc-perfilamiento-facial-masculinizacion.jpg",
+  "perfilamiento-facial-perfiloplastia-no-quirurgica": "/images/svc-perfilamiento-facial-perfiloplastia-no-quirurgica.jpg",
+  "perfilamiento-facial-surcos": "/images/svc-perfilamiento-facial-surcos.jpg",
+  "perfilamiento-facial-tercio-inferior": "/images/svc-perfilamiento-facial-tercio-inferior.jpg",
+  "acne-prp": "/images/svc-acne-prp.jpg",
+  "cicatrices-acne-prp": "/images/svc-cicatrices-acne-prp.jpg",
+  "rejuvenecimiento-facial-pdrn": "/images/svc-rejuvenecimiento-facial-pdrn.jpg",
+  "toxina-botulinica-full-face-botox": "/images/svc-toxina-botulinica-full-face-botox.jpg",
+  "acido-hialuronico-full-face-con-acido-hialuronico": "/images/svc-acido-hialuronico-full-face-con-acido-hialuronico.jpg",
+  "rejuvenecimiento-facial-full-face-personalizado": "/images/svc-rejuvenecimiento-facial-full-face-personalizado.jpg",
+  "cicatrices-acne-bioestimulacion": "/images/svc-cicatrices-acne-bioestimulacion.jpg",
+  "rejuvenecimiento-facial-hidroxiapatita-de-calcio": "/images/svc-rejuvenecimiento-facial-hidroxiapatita-de-calcio.jpg",
+  "rejuvenecimiento-facial-acido-polilactico": "/images/svc-rejuvenecimiento-facial-acido-polilactico.jpg",
+  "toxina-botulinica-afinamiento-facial": "/images/svc-toxina-botulinica-afinamiento-facial.jpg",
+  "toxina-botulinica-botox-masculino": "/images/svc-toxina-botulinica-botox-masculino.jpg",
+  "toxina-botulinica-botox-preventivo": "/images/svc-toxina-botulinica-botox-preventivo.jpg",
+  "toxina-botulinica-tercio-superior": "/images/svc-toxina-botulinica-tercio-superior.jpg",
+  "rejuvenecimiento-facial-tratamiento-de-ojeras": "/images/svc-rejuvenecimiento-facial-tratamiento-de-ojeras.jpg",
+  "perfilamiento-facial-ojeras": "/images/svc-perfilamiento-facial-ojeras.jpg",
+  "acne-laser-co2-fraccionado": "/images/svc-acne-laser-co2-fraccionado.jpg",
+  "cicatrices-acne-laser-co2-fraccionado": "/images/svc-cicatrices-acne-laser-co2-fraccionado.jpg",
+  "acido-hialuronico-aumento-de-labios": "/images/svc-acido-hialuronico-aumento-de-labios.jpg",
+  "perfilamiento-facial-labios": "/images/svc-perfilamiento-facial-labios.jpg",
+  "toxina-botulinica-bunny-lines": "/images/svc-toxina-botulinica-bunny-lines.jpg",
+  "toxina-botulinica-entrecejo": "/images/svc-toxina-botulinica-entrecejo.jpg",
+  "cicatrices-acne-programa-avanzado-de-cicatrices": "/images/svc-cicatrices-acne-programa-avanzado-de-cicatrices.jpg",
+  "cicatrices-acne-terapia-combinada": "/images/svc-cicatrices-acne-terapia-combinada.jpg",
+  "cicatrices-acne-acido-hialuronico-para-cicatrices-seleccionadas": "/images/svc-cicatrices-acne-acido-hialuronico-para-cicatrices-seleccionadas.jpg",
+  "cicatrices-acne-evaluacion-de-cicatrices": "/images/svc-cicatrices-acne-evaluacion-de-cicatrices.jpg",
+  "rejuvenecimiento-facial-profhilo": "/images/svc-rejuvenecimiento-facial-profhilo.jpg",
+  "perfilamiento-facial-pomulos": "/images/svc-perfilamiento-facial-pomulos.jpg",
+  "cicatrices-acne-protocolo-para-cicatrices-de-acne": "/images/svc-cicatrices-acne-protocolo-para-cicatrices-de-acne.jpg",
+  "perfilamiento-facial-nariz": "/images/svc-perfilamiento-facial-nariz.jpg",
+  "toxina-botulinica-maseteros": "/images/svc-toxina-botulinica-maseteros.jpg",
+};
+
 const SERVICE_TOPIC_KEYWORDS: [string, string[]][] = [
   ["patas-de-gallo", ["patas de gallo"]],
   ["frente-entrecejo", ["frente", "entrecejo", "bunny"]],
@@ -127,8 +191,8 @@ export function categoryImage(slug: string, override?: string | null) {
   return usableOverride(override) || CATEGORY_IMAGES[slug] || SITE_IMAGES.clinic;
 }
 
-export function serviceImage(service: { name?: string; image?: string | null }, categorySlug: string) {
-  return usableOverride(service.image) || (service.name ? SERVICE_TOPIC_IMAGES[serviceTopic(service.name) ?? ""] : null) || categoryImage(categorySlug);
+export function serviceImage(service: { name?: string; slug?: string; image?: string | null }, categorySlug: string) {
+  return usableOverride(service.image) || (service.slug ? SERVICE_IMAGES[service.slug] : null) || (service.name ? SERVICE_TOPIC_IMAGES[serviceTopic(service.name) ?? ""] : null) || categoryImage(categorySlug);
 }
 
 export function cityImage(city: string) {
