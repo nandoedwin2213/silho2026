@@ -30,12 +30,13 @@ const faqs = [
 ];
 
 export default async function Home() {
-  const [professional, locations, cases, valuation, settings] = await Promise.all([
+  const [professional, locations, cases, valuation, settings, plans] = await Promise.all([
     db.professional.findFirst({ where: { active: true }, orderBy: { name: "asc" } }),
     db.location.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
     db.beforeAfter.findMany({ where: { published: true, patientConsent: true }, orderBy: { createdAt: "desc" }, take: 3 }),
     db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, name: true, basePrice: true, discountEligible: true } }),
     getSettings(["WHATSAPP_NUMBER", "CLINIC_EMAIL", "CLINIC_HOURS", "WEB_TREATMENT_BONUS_USD", "WEB_BONUS_DAYS", "WEB_WEEKLY_SLOTS", "WEB_OFFER_VALID_UNTIL", "ASSESSMENT_SERVICE_SLUG"]),
+    db.subscriptionPlan.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
   ]);
   const webDiscount = valuation ? await getWebDiscountFor(valuation) : 25;
   const faqJson = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })) };
@@ -66,6 +67,7 @@ export default async function Home() {
           {valuation && <div className="mt-10 max-w-xl rounded-2xl border border-gold/40 bg-white/10 p-5 backdrop-blur"><p className="text-sm font-semibold text-gold-light">Reserve en línea y acceda a beneficios exclusivos</p><div className="mt-2 flex flex-wrap items-baseline gap-3"><span className="text-sm text-white/55 line-through">USD {Number(valuation.basePrice).toFixed(2)}</span><span className="font-heading text-2xl">USD {(Number(valuation.basePrice) * (1 - webDiscount / 100)).toFixed(2)}</span><span className="text-sm text-white/65">{webDiscount}% beneficio web</span></div></div>}
         </div>
       </section>
+      <section className="bg-[#fafaf9] px-6 py-20 lg:px-10"><div className="mx-auto max-w-7xl"><div className="flex flex-wrap items-end justify-between gap-5"><SectionHeading eyebrow="Programas All Inclusive" title="Tratamiento, seguimiento y cuidado de piel cada mes." description="Elige el programa que acompaña mejor tus objetivos faciales." /><Link href="/membresias" className="text-sm font-semibold text-navy">Ver programas <ArrowRight className="ml-1 inline size-4" /></Link></div><div className="mt-8 grid gap-5 md:grid-cols-2">{plans.map((plan) => <Link key={plan.id} href={`/membresias/${plan.slug}`} className="group overflow-hidden rounded-2xl border bg-white"><div className="relative aspect-[16/7]"><Image src={plan.image || SITE_IMAGES.membresias} alt={plan.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-500 group-hover:scale-105" /></div><div className="p-5"><p className="text-xs uppercase tracking-[0.18em] text-gold">{plan.tagline}</p><h3 className="mt-2 font-heading text-2xl text-navy">{plan.name}</h3><p className="mt-2 text-sm text-muted-foreground">USD {Number(plan.price).toFixed(2)} / mes</p></div></Link>)}</div></div></section>
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
         <SectionHeading eyebrow="Encuentre su ruta" title="Tres caminos para cuidar su rostro" description="Cada ruta parte de una valoración médica y de un plan diseñado alrededor de sus objetivos." />
         <div className="mt-10 grid gap-5 lg:grid-cols-3">{routeList.map((route) => <Link key={route.slug} href={`/${route.slug}`} className="group overflow-hidden rounded-3xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><div className="relative aspect-[4/3] overflow-hidden"><Image src={route.image} alt={route.name} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-navy/85 via-transparent to-transparent" /><div className="absolute inset-x-0 bottom-0 p-5 text-white"><p className="text-xs uppercase tracking-[0.18em] text-gold-light">{route.navLabel}</p><h2 className="mt-2 font-heading text-2xl">{route.name}</h2></div></div><div className="p-5"><p className="text-sm leading-6 text-muted-foreground">{route.tagline}</p><p className="mt-4 text-sm font-semibold text-navy">Desde USD {route.priceFrom} <ArrowRight className="ml-1 inline size-4" /></p></div></Link>)}</div>

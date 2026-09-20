@@ -39,6 +39,7 @@ export default async function AccountPage() {
           <Button type="submit" variant="outline" className="rounded-full"><LogOut className="size-4" />Cerrar sesión</Button>
         </form>
       </div>
+      <div className="mt-8 rounded-2xl border border-gold/30 bg-[#f5f1e8] p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-gold">Programas All Inclusive</p><p className="mt-2 font-heading text-2xl text-navy">Tratamiento y seguimiento cada mes</p></div><Link href="/cuenta/suscripcion" className="text-sm font-semibold text-navy">Mis programas →</Link></div></div>
       {summary.expiringSoon.length > 0 && (
         <div className="mt-8 rounded-2xl border border-gold/40 bg-[#f5f1e8] p-5 text-sm text-navy">
           Tiene puntos que vencen próximamente. Revise el detalle en su historial.

@@ -441,6 +441,7 @@ async function main() {
   for (const [key, value] of Object.entries(newSettings)) {
     await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value } });
   }
+  await prisma.setting.upsert({ where: { key: "SUBSCRIPTION_TERMS_VERSION" }, update: { value: "2026-09" }, create: { key: "SUBSCRIPTION_TERMS_VERSION", value: "2026-09" } });
 
   for (const [order, location] of LOCATIONS.entries()) {
     const data = { name: location.city, city: location.city, address: location.address, mapsUrl: location.mapsUrl, order, active: true };
@@ -464,13 +465,53 @@ async function main() {
     },
   });
 
-  const plans: Array<[string, string, number]> = [
-    ["SILHO ESSENTIAL", "essential", 49],
-    ["SILHO PLUS", "plus", 75],
-    ["SILHO PREMIUM", "premium", 120],
+  for (const slug of ["essential", "plus", "premium"]) {
+    await prisma.subscriptionPlan.updateMany({ where: { slug }, data: { active: false } });
+  }
+  const plans = [
+    {
+      slug: "piel-clara",
+      name: "SILHO Piel Clara",
+      price: 99.99,
+      order: 0,
+      routeSlug: "acne",
+      image: "/images/route-acne.jpg",
+      tagline: "All Inclusive · Acné y cicatrices de acné",
+      focus: "Acné activo y cicatrices de acné",
+      description: "Programa médico mensual que integra control del acné, tratamiento de cicatrices y cuidado de la piel con seguimiento continuo del Dr. Edwin Ayala.",
+      features: [
+        "Valoración médica inicial y control médico mensual",
+        "1 sesión mensual de tratamiento según protocolo (peeling químico, microneedling, láser fraccionado o PRP)",
+        "Limpieza facial médica con extracciones",
+        "Plan de cuidado de piel personalizado y seguimiento por WhatsApp",
+        "Fotografía clínica de evolución mes a mes",
+        "10% de descuento en productos y tratamientos adicionales",
+        "Acumula puntos SILHO Face Rewards con cada mensualidad",
+      ],
+    },
+    {
+      slug: "renova",
+      name: "SILHO Renova",
+      price: 150,
+      order: 1,
+      routeSlug: "rejuvenecimiento-facial",
+      image: "/images/route-rejuvenecimiento.jpg",
+      tagline: "All Inclusive · Rejuvenecimiento facial",
+      focus: "Rejuvenecimiento y calidad de piel",
+      description: "Programa mensual de rejuvenecimiento facial progresivo: estimula colágeno, mejora textura y luminosidad y mantiene resultados con seguimiento médico.",
+      features: [
+        "Valoración médica inicial y control médico mensual",
+        "1 sesión mensual de tratamiento regenerativo según protocolo (bioestimulación, radiofrecuencia, microneedling, peeling o PRP)",
+        "Plan de cuidado de piel antiedad personalizado",
+        "Fotografía clínica de evolución mes a mes",
+        "15% de descuento en toxina botulínica y ácido hialurónico",
+        "Prioridad de agenda en las tres sedes",
+        "Acumula puntos SILHO Face Rewards con cada mensualidad",
+      ],
+    },
   ];
-  for (const [order, [name, slug, price]] of plans.entries()) {
-    await prisma.subscriptionPlan.upsert({ where: { slug }, update: { name, price, order, active: true, interval: "MONTH" }, create: { name, slug, price, order, interval: "MONTH" } });
+  for (const plan of plans) {
+    await prisma.subscriptionPlan.upsert({ where: { slug: plan.slug }, update: { ...plan, interval: "MONTH", active: true }, create: { ...plan, interval: "MONTH" } });
   }
   const rewards = [
     ["Descuento de valoración", "descuento-valoracion", "USD 15 de descuento en su próxima valoración", 300, "ESSENTIAL", 0],

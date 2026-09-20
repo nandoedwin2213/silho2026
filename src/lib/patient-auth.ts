@@ -157,9 +157,10 @@ export async function getPatientSession() {
   }
 }
 
-export async function requirePatient() {
+export async function requirePatient(next?: string) {
   const session = await getPatientSession();
-  if (!session) redirect("/cuenta/ingresar");
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "";
+  if (!session) redirect(safeNext ? `/cuenta/ingresar?next=${encodeURIComponent(safeNext)}` : "/cuenta/ingresar");
   return session;
 }
 

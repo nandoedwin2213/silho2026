@@ -341,6 +341,11 @@ model SubscriptionPlan {
   price         Decimal        @db.Decimal(10, 2)
   interval      String         @default("MONTH")
   description   String?
+  tagline       String?
+  focus         String?
+  features      String[]       @default([])
+  routeSlug     String?        @map("route_slug")
+  image         String?
   active        Boolean        @default(true)
   order         Int
   subscriptions Subscription[]
@@ -349,22 +354,57 @@ model SubscriptionPlan {
 }
 
 model Subscription {
-  id                 String             @id @default(cuid())
-  patientId          String             @map("patient_id")
-  planId             String             @map("plan_id")
-  status             SubscriptionStatus @default(PENDING)
+  id                 String                @id @default(cuid())
+  patientId          String                @map("patient_id")
+  planId             String                @map("plan_id")
+  status             SubscriptionStatus    @default(PENDING)
   provider           String
-  providerCustomerId String?            @map("provider_customer_id")
-  providerToken      String?            @map("provider_token")
-  startDate          DateTime           @default(now()) @map("start_date")
-  nextBillingDate    DateTime?          @map("next_billing_date")
-  lastBillingDate    DateTime?          @map("last_billing_date")
-  cancelledAt        DateTime?          @map("cancelled_at")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  patient            Patient            @relation(fields: [patientId], references: [id])
-  plan               SubscriptionPlan   @relation(fields: [planId], references: [id])
+  providerCustomerId String?               @map("provider_customer_id")
+  providerToken      String?               @map("provider_token")
+  cardHolderEnc      String?               @map("card_holder_enc")
+  cardBrand          String?               @map("card_brand")
+  cardLast4          String?               @map("card_last4")
+  consentAt          DateTime?             @map("consent_at")
+  consentIp           String?               @map("consent_ip")
+  consentText         String?               @map("consent_text")
+  termsVersion        String?               @map("terms_version")
+  failedAttempts      Int                   @default(0) @map("failed_attempts")
+  cancelReason        String?               @map("cancel_reason")
+  startDate          DateTime              @default(now()) @map("start_date")
+  nextBillingDate    DateTime?             @map("next_billing_date")
+  lastBillingDate    DateTime?             @map("last_billing_date")
+  cancelledAt        DateTime?             @map("cancelled_at")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  patient            Patient               @relation(fields: [patientId], references: [id])
+  plan               SubscriptionPlan      @relation(fields: [planId], references: [id])
+  payments           SubscriptionPayment[]
 
   @@map("subscriptions")
+}
+
+enum SubscriptionPaymentKind {
+  INITIAL
+  RECURRING
+}
+
+model SubscriptionPayment {
+  id                    String                  @id @default(cuid())
+  subscriptionId        String                  @map("subscription_id")
+  kind                  SubscriptionPaymentKind
+  provider              String
+  clientTransactionId   String                  @unique @map("client_transaction_id")
+  providerTransactionId String?                 @map("provider_transaction_id")
+  amount                Decimal                 @db.Decimal(10, 2)
+  status                PaymentStatus           @default(PENDING)
+  periodStart           DateTime                @map("period_start")
+  periodEnd             DateTime                @map("period_end")
+  rawResponse           Json?                   @map("raw_response")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  subscription          Subscription            @relation(fields: [subscriptionId], references: [id])
+
+  @@map("subscription_payments")
 }
 
 model BeforeAfter {
