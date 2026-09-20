@@ -7,6 +7,7 @@ import { generateReferralCode } from "./rewards";
 import { rateLimit } from "./rate-limit";
 import { accountLoginSchema, accountRegistrationSchema } from "./validation/account";
 import { getAuthSecret } from "./auth-secret";
+import { canClaimPatient } from "./patient-claim";
 
 export const patientCookieName = "silho-patient-session";
 const sessionDuration = 60 * 60 * 24 * 30;
@@ -45,6 +46,9 @@ export async function registerPatient(input: RegistrationInput) {
         },
       });
     } else {
+      if (!canClaimPatient(patient, { email: normalizedEmail, phone: parsed.phone })) {
+        throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
+      }
       const updates: { email?: string; phone?: string; city?: string } = {};
       if (!patient.email) updates.email = normalizedEmail;
       if (!patient.phone) updates.phone = parsed.phone;

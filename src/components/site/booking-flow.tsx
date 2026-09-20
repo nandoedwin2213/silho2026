@@ -37,7 +37,15 @@ export function BookingFlow({ locations, service, webDiscount, bonusUsd, bonusDa
     fetch(`/api/availability?locationId=${encodeURIComponent(locationId)}&date=${date}`).then((response) => response.json()).then((data: { occupied?: string[] }) => setOccupied(data.occupied ?? [])).catch(() => setOccupied([]));
   }, [date, locationId]);
 
-  const update = (key: keyof typeof values, value: string | boolean) => setValues((current) => ({ ...current, [key]: value }));
+  useEffect(() => {
+    const documentField = document.querySelector<HTMLInputElement>('input[placeholder="Cédula o pasaporte"]');
+    if (documentField) documentField.disabled = Boolean(patient?.documentId);
+  }, [patient?.documentId]);
+
+  const update = (key: keyof typeof values, value: string | boolean) => {
+    if (patient?.documentId && key === "documentId") return;
+    setValues((current) => ({ ...current, [key]: value }));
+  };
   const canContinue = useMemo(() => {
     if (step === 1) return Boolean(objective);
     if (step === 2) return Boolean(locationId);
