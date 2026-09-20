@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { createHash, randomInt } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -8,6 +9,7 @@ import { rateLimit } from "./rate-limit";
 import { accountLoginSchema, accountRegistrationSchema } from "./validation/account";
 import { getAuthSecret } from "./auth-secret";
 import { canClaimPatient } from "./patient-claim";
+import { sendEmail } from "./notifications";
 
 export const patientCookieName = "silho-patient-session";
 const sessionDuration = 60 * 60 * 24 * 30;
@@ -22,7 +24,32 @@ type RegistrationInput = {
   city?: string;
   password: string;
   referralCode?: string;
+  claimCode?: string;
 };
+
+const claimCookieName = "silho-claim";
+const claimError = "Debe verificar su correo para vincular su historial.";
+const unavailableEmailError = "La verificación por correo no está disponible; escríbanos por WhatsApp para vincular su cuenta.";
+
+export async function requestClaimCode({ documentId, email }: { documentId: string; email: string }) {
+  const parsedEmail = email.trim().toLowerCase();
+  const limited = rateLimit(`patient-claim:${documentId.trim()}`, 5);
+  if (!limited.success) throw new Error("Demasiadas solicitudes. Inténtelo nuevamente más tarde.");
+  const patient = await db.patient.findUnique({ where: { documentId: documentId.trim() } });
+  if (!patient || !canClaimPatient(patient, { email: parsedEmail, phone: "" })) {
+    throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
+  }
+  const code = String(randomInt(100000, 1000000));
+  const codeHash = createHash("sha256").update(code).digest("hex");
+  const token = await new SignJWT({ documentId: documentId.trim(), email: parsedEmail, codeHash })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .sign(secret());
+  const delivery = await sendEmail({ to: parsedEmail, subject: "Código de verificación SILHO", html: `<p>Su código de verificación SILHO es <strong>${code}</strong>. Vence en 15 minutos.</p>` });
+  if (!delivery.sent) throw new Error(unavailableEmailError);
+  (await cookies()).set(claimCookieName, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 900, path: "/" });
+}
 
 export async function registerPatient(input: RegistrationInput) {
   const parsed = accountRegistrationSchema.parse(input);
@@ -49,6 +76,17 @@ export async function registerPatient(input: RegistrationInput) {
       if (!canClaimPatient(patient, { email: normalizedEmail, phone: parsed.phone })) {
         throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
       }
+      const claimToken = (await cookies()).get(claimCookieName)?.value;
+      let verified = false;
+      if (claimToken && parsed.claimCode) {
+        try {
+          const { payload } = await jwtVerify(claimToken, secret());
+          verified = payload.documentId === parsed.documentId && payload.email === normalizedEmail && payload.codeHash === createHash("sha256").update(parsed.claimCode).digest("hex");
+        } catch {
+          verified = false;
+        }
+      }
+      if (!verified) throw new Error(claimError);
       const updates: { email?: string; phone?: string; city?: string } = {};
       if (!patient.email) updates.email = normalizedEmail;
       if (!patient.phone) updates.phone = parsed.phone;
@@ -78,6 +116,7 @@ export async function registerPatient(input: RegistrationInput) {
   });
 
   await setPatientSession({ accountId: result.account.id, patientId: result.patient.id, email: result.account.email });
+  (await cookies()).set(claimCookieName, "", { maxAge: 0, path: "/" });
   return result;
 }
 

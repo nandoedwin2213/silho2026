@@ -237,6 +237,7 @@ model PointsTransaction {
   patient         Patient      @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
+  @@unique([orderId, reason, patientId])
   @@map("points_transactions")
 }
 

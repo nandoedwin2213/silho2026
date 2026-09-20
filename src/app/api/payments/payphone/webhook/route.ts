@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { rateLimit } from "@/lib/rate-limit";
 import { toPaymentStatus } from "@/lib/payments/status";
-import { markOrderPaid } from "@/lib/orders";
+import { markOrderFailed, markOrderPaid } from "@/lib/orders";
 
 export async function POST(request: Request) {
   const result = rateLimit(`payphone-webhook:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 30);
@@ -17,5 +17,6 @@ export async function POST(request: Request) {
   const paymentStatus = toPaymentStatus(confirmation.status);
   const payment = await db.payment.update({ where: { clientTransactionId: webhook.clientTransactionId }, data: { providerTransactionId: webhook.providerTransactionId, status: paymentStatus, rawResponse: JSON.parse(JSON.stringify(confirmation.raw)) }, include: { order: true } });
   if (paymentStatus === "APPROVED") await markOrderPaid(payment.orderId);
+  else if (paymentStatus === "REJECTED" || paymentStatus === "CANCELLED" || paymentStatus === "ERROR") await markOrderFailed(payment.orderId);
   return NextResponse.json({ received: true });
 }

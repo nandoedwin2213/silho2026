@@ -21,7 +21,7 @@ export function CheckoutForm({ serviceId, serviceName, base, discount, total }: 
     const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, serviceId, paymentMethod: method, acceptTerms: true }) });
     const data = await response.json();
     if (data.redirectUrl) window.location.href = data.redirectUrl;
-    else if (data.orderId) window.location.href = `/checkout/gracias/${data.orderId}${data.status === "PENDING_CONFIGURATION" ? "?configuracion=pendiente" : ""}`;
+    else if (data.orderId) window.location.href = "/";
     else setMessage(data.error ?? "No pudimos procesar tu solicitud.");
     setLoading(false);
   }

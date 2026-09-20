@@ -9,6 +9,7 @@ export const accountRegistrationSchema = z.object({
   city: z.string().trim().max(80).optional(),
   password: z.string().min(8).max(100),
   referralCode: z.string().trim().max(40).optional(),
+  claimCode: z.string().trim().length(6).optional(),
 });
 
 export const accountLoginSchema = z.object({
