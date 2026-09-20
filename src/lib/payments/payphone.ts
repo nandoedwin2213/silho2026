@@ -47,6 +47,33 @@ export const payphone: PaymentProvider = {
     const raw = await response.json();
     return { status: response.ok ? mapStatus(raw.status ?? raw.transactionStatus) : "ERROR", raw };
   },
+  async chargeToken(input) {
+    if (!this.isConfigured()) return { status: "PENDING_CONFIGURATION", raw: {} };
+    const cents = Math.round(input.amount * 100);
+    const response = await fetch(`${endpoint}/api/transaction/web`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.PAYPHONE_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cardHolder: input.cardHolderEnc,
+        cardToken: input.cardToken,
+        documentId: input.documentId,
+        phoneNumber: input.phoneNumber,
+        email: input.email,
+        amount: cents,
+        amountWithoutTax: cents,
+        amountWithTax: 0,
+        tax: 0,
+        service: 0,
+        tip: 0,
+        clientTransactionId: input.clientTransactionId,
+        currency: input.currency,
+        storeId: process.env.PAYPHONE_STORE_ID,
+        optionalParameter: input.description,
+      }),
+    });
+    const raw = await response.json();
+    return { status: response.ok ? mapStatus(raw.status ?? raw.transactionStatus) : "ERROR", providerTransactionId: String(raw.transactionId ?? raw.id ?? ""), raw };
+  },
   async parseWebhook(req) {
     const raw = await req.json();
     return {

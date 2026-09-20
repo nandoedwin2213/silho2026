@@ -14,6 +14,6 @@ export const patientLinks = [
   ["/beneficios", "Beneficios y puntos"],
   ["/casos-clinicos", "Casos clínicos"],
   ["/blog", "Blog"],
-  ["/membresias", "Membresías"],
+  ["/membresias", "Programas All Inclusive"],
   ["/tratamientos", "Catálogo completo"],
 ] as const;

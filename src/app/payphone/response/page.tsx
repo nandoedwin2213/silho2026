@@ -5,9 +5,19 @@ import { getPaymentProvider } from "@/lib/payments";
 import { toPaymentStatus } from "@/lib/payments/status";
 import { markOrderFailed, markOrderPaid } from "@/lib/orders";
 import { signPublicToken } from "@/lib/public-token";
+import { settleSubscriptionPayment } from "@/lib/subscriptions";
 
-export default async function PayphoneResponsePage({ searchParams }: { searchParams: Promise<{ id?: string; clientTransactionId?: string; cancelled?: string }> }) {
+export default async function PayphoneResponsePage({ searchParams }: { searchParams: Promise<{ id?: string; clientTransactionId?: string; cancelled?: string; ctoken?: string }> }) {
   const query = await searchParams;
+  if (query.clientTransactionId?.startsWith("SUB-")) {
+    const provider = getPaymentProvider("payphone");
+    if (provider && query.id) {
+      const confirmation = await provider.confirmPayment({ providerTransactionId: query.id, clientTransactionId: query.clientTransactionId });
+      const settled = await settleSubscriptionPayment({ clientTransactionId: query.clientTransactionId, providerTransactionId: query.id, status: confirmation.status, raw: confirmation.raw, ctoken: query.ctoken });
+      redirect(`/cuenta/suscripcion?pago=${settled.status === "APPROVED" ? "aprobado" : settled.status === "PENDING" ? "pendiente" : "rechazado"}`);
+    }
+    redirect("/cuenta/suscripcion?pago=pendiente");
+  }
   let result = "No pudimos identificar la transacción.";
   if (query.cancelled) result = "El pago fue cancelado. Tu solicitud permanece pendiente.";
   else if (query.id && query.clientTransactionId) {

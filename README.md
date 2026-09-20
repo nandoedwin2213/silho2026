@@ -101,6 +101,7 @@ El sitio queda en `http://localhost:3000` y el panel en `http://localhost:3000/a
 | `PAYPHONE_CLIENT_ID` | Client ID de PayPhone. |
 | `PAYPHONE_CLIENT_SECRET` | Client secret server-only de PayPhone. |
 | `PAYPHONE_ENVIRONMENT` | `sandbox` o producción. |
+| `PAYPHONE_CODING_PASSWORD` | Clave server-only para cifrar el titular de tarjeta antes de enviarlo a PayPhone. |
 | `RESEND_API_KEY` | API key opcional para correo transaccional. |
 | `EMAIL_FROM` | Remitente de Resend; se usa junto con `RESEND_API_KEY`. |
 | `NEXT_PUBLIC_GA_ID` | Identificador opcional de Google Analytics 4. |
@@ -146,6 +147,8 @@ Flujo:
 ```text
 create → redirect → response → confirm
 ```
+
+Las suscripciones utilizan tokenización PayPhone. El `cardToken` se conserva cifrado por PayPhone y el titular se cifra con AES-256-CBC usando `PAYPHONE_CODING_PASSWORD`; nunca se almacenan números completos de tarjeta.
 
 El proveedor no hace llamadas de red si falta `PAYPHONE_TOKEN`; la orden permanece pendiente para contacto manual.
 

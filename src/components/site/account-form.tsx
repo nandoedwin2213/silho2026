@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 
 type Mode = "register" | "login";
 
-export function AccountForm({ mode }: { mode: Mode }) {
+export function AccountForm({ mode, next = "/cuenta" }: { mode: Mode; next?: string }) {
   const [message, setMessage] = useState("");
   const [claimCode, setClaimCode] = useState("");
   const [claimSent, setClaimSent] = useState(false);
@@ -20,7 +20,7 @@ export function AccountForm({ mode }: { mode: Mode }) {
     const values = { ...Object.fromEntries(new FormData(event.currentTarget)), ...(claimCode ? { claimCode } : {}) };
     const response = await fetch(`/api/account/${mode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
     const data = await response.json();
-    if (response.ok) window.location.href = "/cuenta";
+    if (response.ok) window.location.href = mode === "login" ? next : "/cuenta";
     else {
       setMessage(data.error ?? "No pudimos completar la solicitud.");
       if (mode === "register" && data.error === "Debe verificar su correo para vincular su historial.") { setClaimSent(false); setClaimRequired(true); }
