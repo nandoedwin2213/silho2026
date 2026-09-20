@@ -100,7 +100,8 @@ export const SITE_IMAGES = {
   hero: "/images/hero.jpg",
   clinic: "/images/clinic.jpg",
   consultation: "/images/consultation.jpg",
-  doctor: "/images/doctor.jpg",
+  doctor: "/images/dr-edwin-ayala-1.jpg",
+  doctorSeated: "/images/dr-edwin-ayala-2.jpg",
   agenda: "/images/agenda.jpg",
   membresias: "/images/membresias.jpg",
 };

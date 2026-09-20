@@ -22,6 +22,20 @@ type ServiceSeed = {
   concerns?: string[];
 };
 
+const PROFESSIONAL = {
+  name: "Dr. Edwin Fernando Ayala",
+  title: "Médico y cirujano · Medicina Estética",
+  bio: "El Dr. Edwin Fernando Ayala es médico y cirujano con una destacada formación internacional y multidisciplinaria. Se formó en Medicina Estética en Argentina, especializándose en rejuvenecimiento facial, armonización, tratamiento del acné y manejo avanzado de cicatrices. Además, realizó estudios especializados en Medicina Aeroespacial y Terapia Hiperbárica en México, enfocados en la fisiología humana, el desempeño en ambientes extremos y la recuperación mediante oxigenoterapia hiperbárica.\n\nComplementó su perfil médico con una maestría en Business Intelligence y Ciencia de Datos, además de una maestría en Supply Chain Management en la Universidad Espíritu Santo (UEES). Esta combinación de medicina, análisis de datos y gestión estratégica le permite desarrollar servicios de salud innovadores, eficientes y basados en evidencia, integrando ciencia, tecnología y una atención personalizada.",
+  photo: "/images/dr-edwin-ayala-1.jpg",
+  education: [
+    "Médico y cirujano",
+    "Medicina Estética — Argentina (rejuvenecimiento facial, armonización, acné y cicatrices)",
+    "Medicina Aeroespacial y Terapia Hiperbárica — México",
+    "Maestría en Business Intelligence y Ciencia de Datos — UEES",
+    "Maestría en Supply Chain Management — UEES",
+  ],
+};
+
 const LOCATIONS = [
   { city: "Salinas", address: "Chipipe, frente a la base aérea", mapsUrl: "https://maps.google.com/?q=-2.201090,-80.984108" },
   { city: "Quito", address: "Portugal y Catalina Aldáz, Edificio Catalina Plaza, piso 5, oficina 509", mapsUrl: "https://maps.google.com/?q=Edificio+Catalina+Plaza,+Portugal+y+Catalina+Ald%C3%A1z,+Quito" },
@@ -438,13 +452,10 @@ async function main() {
   }
   await prisma.professional.upsert({
     where: { id: "professional-edwin-ayala" },
-    update: { name: "Dr. Edwin Ayala", title: "Médico", bio: "Médico dedicado a la medicina estética facial: armonización, rejuvenecimiento, acné y cicatrices de acné, con planes personalizados tras valoración.", active: true },
+    update: { ...PROFESSIONAL, active: true },
     create: {
       id: "professional-edwin-ayala",
-      name: "Dr. Edwin Ayala",
-      title: "Médico",
-      bio: "Médico dedicado a la medicina estética facial: armonización, rejuvenecimiento, acné y cicatrices de acné, con planes personalizados tras valoración.",
-      education: [],
+      ...PROFESSIONAL,
       experience: [],
       certifications: [],
       publications: [],
