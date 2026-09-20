@@ -45,6 +45,8 @@ export async function saveServiceAction(formData: FormData) {
   redirect("/admin/servicios");
 }
 
+const adminPathByModel: Record<string, string> = { appointment: "citas", order: "pedidos", subscription: "suscripciones", lead: "leads" };
+
 export async function updateStatusAction(formData: FormData) {
   await requireAdmin();
   const model = String(formData.get("model"));
@@ -70,7 +72,7 @@ export async function updateStatusAction(formData: FormData) {
     });
   }
   else throw new Error("Modelo o estado inválido.");
-  revalidatePath(`/admin/${model === "appointment" ? "citas" : `${model}s`}`);
+  revalidatePath(`/admin/${adminPathByModel[model] ?? `${model}s`}`);
 }
 
 export async function saveSettingsAction(formData: FormData) {

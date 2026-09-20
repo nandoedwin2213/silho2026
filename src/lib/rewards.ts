@@ -49,6 +49,10 @@ export async function getPointsBalance(client: Pick<Prisma.TransactionClient, "p
   return transactions.reduce((sum, transaction) => sum + transaction.points, 0);
 }
 
+function isEarning(transaction: { points: number; reason: PointsReason; orderId: string | null }) {
+  return transaction.points > 0 && !(transaction.reason === "ADJUSTMENT" && transaction.orderId);
+}
+
 export const TIERS: { tier: RewardTier; min: number; benefits: string[] }[] = [
   { tier: "ESSENTIAL", min: 0, benefits: ["Acumular puntos por acciones elegibles", "Acceder a recompensas disponibles"] },
   { tier: "GOLD", min: 500, benefits: ["Beneficios de Essential", "Acceso a beneficios de protocolos seleccionados"] },
@@ -86,7 +90,7 @@ export async function getPointsSummary(patientId: string) {
   const allocation = allocateExpirations(transactions);
   const balance = transactions.reduce((sum, transaction) => sum + transaction.points, 0);
   const earned12m = transactions.reduce(
-    (sum, transaction) => sum + (transaction.createdAt >= yearAgo && transaction.points > 0 ? transaction.points : 0),
+    (sum, transaction) => sum + (transaction.createdAt >= yearAgo && isEarning(transaction) ? transaction.points : 0),
     0,
   );
   const tier = [...TIERS].reverse().find((entry) => earned12m >= entry.min)?.tier ?? "ESSENTIAL";
