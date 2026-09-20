@@ -19,6 +19,10 @@ describe("service images", () => {
     expect(serviceImage({ name: "Tratamiento de ojeras", image: "/images/custom.jpg" }, "acne")).toBe("/images/custom.jpg");
   });
 
+  it("uses the service-specific image before the topic image", () => {
+    expect(serviceImage({ name: "Botox preventivo", slug: "toxina-botulinica-botox-preventivo" }, "toxina-botulinica")).toBe("/images/svc-toxina-botulinica-botox-preventivo.jpg");
+  });
+
   it("falls back to the category image when no topic matches", () => {
     expect(serviceTopic("Tratamiento personalizado")).toBeNull();
     expect(serviceImage({ name: "Tratamiento personalizado" }, "acne")).toBe("/images/cat-acne.jpg");
