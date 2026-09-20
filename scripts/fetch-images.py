@@ -1,5 +1,5 @@
 """Descarga imágenes libres (Unsplash License) para el sitio a public/images."""
-import json, os, subprocess, urllib.request, urllib.parse
+import json, os, subprocess, urllib.parse
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "public", "images")
 os.makedirs(OUT, exist_ok=True)
@@ -34,24 +34,83 @@ QUERIES = {
     "blog-cicatrices": "dermatology skin close up texture",
     "blog-laser": "laser beauty device clinic",
     "blog-armonizacion-facial": "beauty face symmetry portrait studio",
+    "route-rejuvenecimiento": "mature woman glowing skin natural portrait",
+    "route-acne": "young woman clear skin close up dermatology",
+    "route-cicatrices": "skin texture close up dermatology treatment",
+    "svc-labios": "natural lips facial aesthetic clinic portrait",
+    "svc-pomulos": "cheekbone facial aesthetic portrait",
+    "svc-menton-mandibula": "jawline chin facial profile aesthetic portrait",
+    "svc-ojeras": "under eye skincare dermatology close up",
+    "svc-nariz": "nose profile facial aesthetic portrait",
+    "svc-frente-entrecejo": "forehead facial expression dermatology portrait",
+    "svc-patas-de-gallo": "smiling eyes crow feet natural portrait",
+    "svc-sonrisa": "smile facial aesthetic portrait natural",
+    "svc-maseteros-bruxismo": "jaw muscle facial anatomy portrait",
+    "svc-cuello-papada": "neck jawline skincare portrait natural",
+    "svc-limpieza-facial": "professional facial cleansing treatment clinic",
+    "svc-peeling": "facial peel treatment",
+    "svc-microneedling-dermapen": "microneedling facial dermatology clinic",
+    "svc-prp": "platelet rich plasma facial dermatology clinic",
+    "svc-laser": "laser dermatology facial treatment clinic",
+    "svc-subcision": "acne scar dermatology treatment close up",
+    "svc-bioestimuladores": "collagen stimulation facial aesthetic clinic",
+    "svc-hilos": "facial thread lift aesthetic clinic treatment",
+    "svc-skinboosters-hidratacion": "skin hydration facial treatment clinic",
+    "svc-valoracion": "doctor evaluating patient face dermatology clinic",
+    "svc-plan-integral": "doctor planning facial treatment consultation",
+    "svc-manchas-melasma": "hyperpigmentation melasma dermatology close up",
+    "svc-rosacea": "rosacea sensitive skin dermatology close up",
+    "svc-poros-textura": "facial skin pores texture dermatology close up",
+    "svc-flacidez": "firming facial skin treatment mature woman",
+    "svc-manos": "hand rejuvenation dermatology treatment clinic",
+    "svc-tercio-medio": "facial anatomy portrait",
+    "svc-full-face": "full face facial aesthetic consultation portrait",
+    "svc-cejas": "eyebrow facial aesthetic natural portrait",
+    "svc-capilar": "hair scalp dermatology treatment clinic",
 }
 
 PICK = json.loads(os.environ.get("PICK", "{}"))
-CREDITS = {}
+ONLY = {key.strip() for key in os.environ.get("ONLY", "").split(",") if key.strip()}
+CREDITS_PATH = os.path.join(OUT, "credits.json")
+with open(CREDITS_PATH) as f:
+    CREDITS = json.load(f)
+
+selected = set(QUERIES) if not ONLY else ONLY & set(QUERIES)
+CACHE = {entry["id"] for key, entry in CREDITS.items() if key not in selected}
 
 def search(q):
-    url = "https://unsplash.com/napi/search/photos?" + urllib.parse.urlencode({"query": q, "per_page": 12, "orientation": "landscape"})
-    return json.loads(subprocess.check_output(["curl", "-s", url]))["results"]
+    results = []
+    queries = [q]
+    for term in ("clinic", "dermatology", "aesthetic", "treatment"):
+        variant = q.replace(term, "").replace("  ", " ").strip()
+        if variant and variant not in queries:
+            queries.append(variant)
+    for query in queries:
+        for page in range(1, 4):
+            url = "https://unsplash.com/napi/search/photos?" + urllib.parse.urlencode({"query": query, "per_page": 30, "page": page, "orientation": "landscape"})
+            results.extend(json.loads(subprocess.check_output(["curl", "--retry", "3", "--retry-all-errors", "-s", url]))["results"])
+        if results:
+            break
+    return results
 
 for key, q in QUERIES.items():
+    if key not in selected:
+        continue
     dest = os.path.join(OUT, f"{key}.jpg")
-    results = [r for r in search(q) if "plus.unsplash.com" not in r["urls"]["raw"]]
+    results = [
+        r for r in search(q)
+        if r.get("id") not in CACHE
+        and (r.get("alt_description") or r.get("description"))
+    ]
     idx = PICK.get(key, 0)
+    if len(results) <= idx:
+        raise RuntimeError(f"No unique image with alt text found for {key}")
     r = results[idx]
     base = r["urls"]["raw"].split("?")[0]
-    subprocess.check_call(["curl", "-sL", "-o", dest, base + "?w=1600&q=78&fm=jpg&fit=crop"])
-    CREDITS[key] = {"id": r["id"], "author": r["user"]["name"], "url": r["links"]["html"], "alt": r.get("alt_description")}
-    print(key, r["id"], r["user"]["name"], "-", r.get("alt_description"))
+    subprocess.check_call(["curl", "--fail", "-sL", "-o", dest, base + "?w=1600&q=78&fm=jpg&fit=crop"])
+    CACHE.add(r["id"])
+    CREDITS[key] = {"id": r["id"], "author": r["user"]["name"], "url": r["links"]["html"], "alt": r.get("alt_description") or r.get("description")}
+    print(key, r["id"], r["user"]["name"], "-", r.get("alt_description") or r.get("description"))
 
-with open(os.path.join(OUT, "credits.json"), "w") as f:
+with open(CREDITS_PATH, "w") as f:
     json.dump(CREDITS, f, ensure_ascii=False, indent=2)

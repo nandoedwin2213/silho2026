@@ -64,7 +64,7 @@ export const routes: Record<RouteSlug, FacialRoute> = {
     priceFrom: 850,
     priceNote,
     categorySlugs: ["toxina-botulinica", "acido-hialuronico", "perfilamiento-facial", "rejuvenecimiento-facial"],
-    image: "/images/cat-rejuvenecimiento-facial.jpg",
+    image: "/images/route-rejuvenecimiento.jpg",
     keywords: ["rejuvenecimiento facial", "armonización facial", "Full Face", "medicina estética facial", "tratamientos faciales", "valoración facial"],
   },
   acne: {
@@ -105,7 +105,7 @@ export const routes: Record<RouteSlug, FacialRoute> = {
     priceFrom: 500,
     priceNote,
     categorySlugs: ["acne"],
-    image: "/images/cat-acne.jpg",
+    image: "/images/route-acne.jpg",
     keywords: ["tratamiento del acné", "acné activo", "medicina estética facial", "acné Ecuador", "control del acné", "valoración de acné"],
   },
   "cicatrices-acne": {
@@ -147,7 +147,7 @@ export const routes: Record<RouteSlug, FacialRoute> = {
     priceFrom: 850,
     priceNote,
     categorySlugs: ["cicatrices-acne"],
-    image: "/images/cat-cicatrices-acne.jpg",
+    image: "/images/route-cicatrices.jpg",
     keywords: ["cicatrices de acné", "láser cicatrices acné", "ice pick", "boxcar", "rolling", "subcisión", "textura facial"],
   },
 };
