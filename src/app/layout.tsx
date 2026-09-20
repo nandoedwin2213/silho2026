@@ -9,6 +9,7 @@ import { WhatsAppButton } from "@/components/site/whatsapp-button";
 import { Toaster } from "@/components/ui/sonner";
 import { getSession } from "@/lib/auth";
 import { SiteChrome } from "@/components/site/site-chrome";
+import { Analytics } from "@/components/site/analytics";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -49,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const adminSession = await getSession();
   return (
     <html lang="es" className={`${manrope.variable} ${sora.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593999999999"} /></>}>{children}</SiteChrome><Toaster /></body>
+      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593999999999"} /></>}>{children}</SiteChrome><Analytics /><Toaster /></body>
     </html>
   );
 }

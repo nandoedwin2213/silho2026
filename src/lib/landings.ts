@@ -1,5 +1,6 @@
 export type LandingConfig = {
   categorySlug?: string;
+  routeSlug?: "rejuvenecimiento-facial" | "acne" | "cicatrices-acne";
   title: string;
   intro: string;
   eyebrow?: string;
@@ -10,31 +11,6 @@ export type LandingConfig = {
 };
 
 export const landingConfigs: Record<string, LandingConfig> = {
-  "trasplante-capilar": {
-    categorySlug: "trasplante-capilar",
-    title: "Trasplante Capilar",
-    intro: "Recupera tu planificación capilar con una valoración médica previa y un plan acorde a tus necesidades.",
-    eyebrow: "Medicina capilar",
-    methods: ["FUE", "Microinjerto capilar", "Diseño de línea frontal", "Restauración de entradas", "Coronilla", "Barba", "Cejas"],
-    disclaimer: "Requiere valoración médica previa. El valor depende del número de unidades foliculares, área, técnica y planificación médica.",
-    faq: [["¿Puedo comprar el procedimiento directamente?", "No. El trasplante capilar requiere valoración médica previa y planificación individual."], ["¿De qué depende el valor?", "Depende del número de unidades foliculares, el área, la técnica y la planificación médica."]],
-  },
-  blefaroplastia: {
-    categorySlug: "blefaroplastia",
-    title: "Blefaroplastia",
-    intro: "Procedimientos perioculares sujetos a valoración, indicación médica, habilitación profesional y establecimiento autorizado.",
-    eyebrow: "Procedimientos perioculares",
-    methods: ["Blefaroplastia superior", "Blefaroplastia inferior", "Superior + inferior", "Evaluación periocular"],
-    disclaimer: "Procedimiento sujeto a valoración, indicación médica, habilitación profesional y establecimiento autorizado. No se prometen resultados.",
-  },
-  rinoplastia: {
-    categorySlug: "rinoplastia",
-    title: "Rinoplastia",
-    intro: "Explora opciones estéticas y funcionales para conversar durante una valoración médica.",
-    eyebrow: "Estética de cabeza y cuello",
-    methods: ["Valoración de nariz", "Rinoplastia estética", "Rinoplastia funcional", "Rinoplastia estética + funcional", "Rinoplastia secundaria", "Rinomodelación no quirúrgica"],
-    disclaimer: "La rinoplastia quirúrgica requiere valoración médica y no puede comprarse directamente. No se prometen resultados.",
-  },
   "perfilamiento-facial": {
     categorySlug: "perfilamiento-facial",
     title: "Perfilamiento y Armonización Facial",
@@ -56,34 +32,25 @@ export const landingConfigs: Record<string, LandingConfig> = {
     intro: "Alternativas de armonización facial que parten de una conversación médica y una indicación individual.",
     eyebrow: "Armonización facial",
   },
-  acne: {
-    categorySlug: "acne",
-    title: "Acné",
-    intro: "Opciones para cuidar tu piel y conversar durante una valoración médica personalizada.",
-    eyebrow: "Salud estética",
-  },
-  "cicatrices-acne": {
-    categorySlug: "cicatrices-acne",
-    title: "Cicatrices de acné",
-    intro: "Un plan personalizado puede mejorar, atenuar y estimular la remodelación de diferentes tipos de cicatrices.",
-    eyebrow: "Cuidado de la piel",
-    disclaimer: "Las cicatrices pueden ser ice pick, boxcar o rolling. No se promete eliminación completa; el objetivo es mejorar y atenuar.",
-  },
   "laser-co2": {
     categorySlug: "acne",
     title: "Láser CO2",
     intro: "Conversa sobre láser CO2 y otras alternativas durante una valoración médica personalizada.",
     eyebrow: "Tecnología médica",
   },
-  "rejuvenecimiento-facial": {
-    categorySlug: "rejuvenecimiento-facial",
-    title: "Rejuvenecimiento facial",
-    intro: "Alternativas para cuidar la calidad de tu piel, suavizar signos visibles y acompañar tu proceso de forma personalizada.",
-    eyebrow: "Rejuvenecimiento",
-  },
-  "medicina-estetica-quito": { title: "Medicina estética en Quito", intro: "Atención estética personalizada en Quito, con valoración médica y opciones faciales, capilares y de rejuvenecimiento.", city: "Quito" },
-  "medicina-estetica-guayaquil": { title: "Medicina estética en Guayaquil", intro: "Atención estética personalizada en Guayaquil, con valoración médica y opciones faciales, capilares y de rejuvenecimiento.", city: "Guayaquil" },
-  "medicina-estetica-salinas": { title: "Medicina estética en Salinas", intro: "Atención estética personalizada en Salinas, con valoración médica y opciones faciales, capilares y de rejuvenecimiento.", city: "Salinas" },
+  "botox-salinas": { categorySlug: "toxina-botulinica", title: "Toxina botulínica en Salinas", intro: "Converse sobre líneas de expresión y un plan facial personalizado en Salinas.", city: "Salinas", eyebrow: "Medicina estética facial" },
+  "acido-hialuronico-salinas": { categorySlug: "acido-hialuronico", title: "Ácido hialurónico en Salinas", intro: "Alternativas de armonización facial que parten de una valoración médica en Salinas.", city: "Salinas", eyebrow: "Armonización facial" },
+  "relleno-labios-salinas": { categorySlug: "acido-hialuronico", title: "Relleno de labios en Salinas", intro: "Converse sobre proporción, definición e hidratación de labios con una valoración individual.", city: "Salinas", eyebrow: "Armonización facial" },
+  "rinomodelacion-salinas": { categorySlug: "acido-hialuronico", title: "Rinomodelación en Salinas", intro: "La indicación de un perfilamiento nasal sin cirugía depende de una valoración médica.", city: "Salinas", eyebrow: "Armonización facial", disclaimer: "No se prometen resultados. La indicación depende de una valoración médica individual." },
+  "tratamiento-acne-salinas": { categorySlug: "acne", routeSlug: "acne", title: "Tratamiento del acné en Salinas", intro: "Tratamos el acné activo antes de que deje nuevas cicatrices, con un plan médico individual.", city: "Salinas", eyebrow: "Ruta SILHO · Acné" },
+  "full-face-salinas": { categorySlug: "rejuvenecimiento-facial", routeSlug: "rejuvenecimiento-facial", title: "Full Face personalizado en Salinas", intro: "Rejuvenecer no significa cambiar su rostro. Comenzamos con una valoración facial completa.", city: "Salinas", eyebrow: "Ruta SILHO · Rejuvenecimiento facial" },
+  "tratamiento-cicatrices-acne": { categorySlug: "cicatrices-acne", routeSlug: "cicatrices-acne", title: "Tratamiento de cicatrices de acné", intro: "Cada cicatriz requiere una estrategia diferente. Evaluamos tipo, profundidad y contexto.", eyebrow: "Ruta SILHO · Cicatrices de acné", disclaimer: "No se promete eliminación completa; el plan depende de una valoración médica individual." },
+  "laser-cicatrices-acne": { categorySlug: "cicatrices-acne", routeSlug: "cicatrices-acne", title: "Láser para cicatrices de acné", intro: "El láser fraccionado puede conversarse para cicatrices seleccionadas después de una valoración.", eyebrow: "Tecnología facial", disclaimer: "La indicación depende del tipo de cicatriz, la piel y una valoración médica individual." },
+  "rejuvenecimiento-facial-ecuador": { categorySlug: "rejuvenecimiento-facial", routeSlug: "rejuvenecimiento-facial", title: "Rejuvenecimiento facial en Ecuador", intro: "Diseñamos tratamientos faciales que respetan su identidad y comienzan con una valoración.", eyebrow: "Medicina estética facial" },
+  "medicina-estetica-facial": { title: "Medicina estética facial", intro: "SILHO es una clínica premium especializada exclusivamente en rostro: valoración, acné, cicatrices y rejuvenecimiento facial.", eyebrow: "SILHO · Rostro" },
+  "medicina-estetica-quito": { title: "Medicina estética facial en Quito", intro: "Atención facial personalizada en Quito, con valoración médica y planes que respetan su identidad.", city: "Quito" },
+  "medicina-estetica-guayaquil": { title: "Medicina estética facial en Guayaquil", intro: "Atención facial personalizada en Guayaquil, con valoración médica y planes que respetan su identidad.", city: "Guayaquil" },
+  "medicina-estetica-salinas": { title: "Medicina estética facial en Salinas", intro: "Atención facial personalizada en Salinas, con valoración médica y planes que respetan su identidad.", city: "Salinas" },
 };
 
 export function cityLandingPath(city: string) {
