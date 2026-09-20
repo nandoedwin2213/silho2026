@@ -36,7 +36,7 @@ export default async function AccountPage() {
           <p className="mt-3 text-muted-foreground">{session.email}</p>
         </div>
         <form action={logoutAccountAction}>
-          <Button variant="outline" className="rounded-full"><LogOut className="size-4" />Cerrar sesión</Button>
+          <Button type="submit" variant="outline" className="rounded-full"><LogOut className="size-4" />Cerrar sesión</Button>
         </form>
       </div>
       {summary.expiringSoon.length > 0 && (
