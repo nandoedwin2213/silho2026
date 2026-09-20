@@ -400,7 +400,7 @@ async function main() {
 
   const settings = {
     PRONTO_PAGO_DISCOUNT: "10",
-    WHATSAPP_NUMBER: "593999999999",
+    WHATSAPP_NUMBER: "593989049001",
     INSTAGRAM_URL: "https://instagram.com/silho.ec",
     TIKTOK_URL: "https://tiktok.com/@silho.ec",
     FACEBOOK_URL: "https://facebook.com/silho.ec",

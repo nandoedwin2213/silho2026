@@ -40,7 +40,7 @@ def main():
         check(path.exists(), f"missing image: {path}")
         check(is_jpeg(path), f"invalid JPEG or image too small: {path}")
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        check(digest not in digests, f"byte-identical images: {digests[digest]} and {path}")
+        check(digest not in digests, f"byte-identical images: {digests.get(digest)} and {path}")
         digests[digest] = path
 
     plus = []
