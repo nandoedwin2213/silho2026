@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { rateLimit } from "@/lib/rate-limit";
 import { toPaymentStatus } from "@/lib/payments/status";
-import { markOrderPaid } from "@/lib/orders";
+import { markOrderFailed, markOrderPaid } from "@/lib/orders";
 
 export async function POST(request: Request) {
   const result = rateLimit(`payphone-confirm:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -16,5 +16,6 @@ export async function POST(request: Request) {
   const paymentStatus = toPaymentStatus(resultPayment.status);
   const payment = await db.payment.update({ where: { clientTransactionId: body.clientTransactionId }, data: { providerTransactionId: body.id, status: paymentStatus, rawResponse: JSON.parse(JSON.stringify(resultPayment.raw)) }, include: { order: true } });
   if (paymentStatus === "APPROVED") await markOrderPaid(payment.orderId);
+  else if (paymentStatus === "REJECTED" || paymentStatus === "CANCELLED" || paymentStatus === "ERROR") await markOrderFailed(payment.orderId);
   return NextResponse.json({ status: resultPayment.status, raw: resultPayment.raw });
 }

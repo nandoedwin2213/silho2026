@@ -8,7 +8,7 @@ import { serviceAdminSchema } from "@/lib/validation/service";
 import { checkoutTotal } from "@/lib/order-total";
 import { z } from "zod";
 import { AppointmentStatus, LeadStatus, SubscriptionStatus } from "@prisma/client";
-import { markOrderPaid } from "@/lib/orders";
+import { markOrderPaid, reverseOrderRedemption } from "@/lib/orders";
 import { awardPoints } from "@/lib/rewards";
 
 const idSchema = z.string().min(1);
@@ -64,7 +64,10 @@ export async function updateStatusAction(formData: FormData) {
   else if (model === "subscription") await db.subscription.update({ where: { id }, data: { status: z.nativeEnum(SubscriptionStatus).parse(status) } });
   else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) {
     if (status === "PAID") await markOrderPaid(id);
-    else await db.order.update({ where: { id }, data: { status: status as "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED" } });
+    else await db.$transaction(async (tx) => {
+      await tx.order.update({ where: { id }, data: { status: status as "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED" } });
+      if (status === "FAILED" || status === "CANCELLED" || status === "REFUNDED") await reverseOrderRedemption(tx, id);
+    });
   }
   else throw new Error("Modelo o estado inválido.");
   revalidatePath(`/admin/${model === "appointment" ? "citas" : `${model}s`}`);

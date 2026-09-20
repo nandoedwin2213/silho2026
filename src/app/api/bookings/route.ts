@@ -3,13 +3,15 @@ import { db } from "@/lib/db";
 import { getPatientSession } from "@/lib/patient-auth";
 import { getPaymentProvider } from "@/lib/payments";
 import { getWebDiscountFor, priceBreakdown } from "@/lib/pricing";
-import { computeMaxRedeemable, pointsToUsd } from "@/lib/rewards";
+import { computeMaxRedeemable, getPointsBalance, pointsToUsd } from "@/lib/rewards";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/notifications";
 import { zonedDateToUtc } from "@/lib/time";
 import { getSettings, getSetting } from "@/lib/settings";
 import { bookingSchema } from "@/lib/validation/booking";
 import { routes } from "@/lib/routes";
+import { signPublicToken } from "@/lib/public-token";
+import { markOrderFailed } from "@/lib/orders";
 
 class BookingConflictError extends Error {}
 class BookingValidationError extends Error {}
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
   const parsed = bookingSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos.", issues: parsed.error.flatten() }, { status: 400 });
   const input = parsed.data;
+  if (input.pointsRedeemed % 100 !== 0) return NextResponse.json({ error: "La cantidad de puntos no es válida." }, { status: 400 });
   if (input.objective && !routes[input.objective]) return NextResponse.json({ error: "La ruta facial no es válida." }, { status: 400 });
   if (!localDateIsValid(input.date)) return NextResponse.json({ error: "Seleccione un día entre hoy y los próximos 60 días, excepto domingos." }, { status: 400 });
   const session = await getPatientSession();
@@ -70,11 +73,11 @@ export async function POST(request: Request) {
       const referrer = await tx.patientAccount.findUnique({ where: { referralCode: input.referralCode.toUpperCase() } });
       if (!referrer || referrer.patientId === patient.id) throw new BookingValidationError("El código de referido no es válido.");
     }
-    const activePoints = await tx.pointsTransaction.findMany({ where: { patientId: patient.id, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }, { points: { lt: 0 } }] }, select: { points: true } });
-    const balance = activePoints.reduce((sum, item) => sum + item.points, 0);
+    const balance = await getPointsBalance(tx, patient.id);
     const maxPercent = Number(settings.REWARDS_MAX_REDEEM_PERCENT ?? "20");
     const requestedPoints = input.pointsRedeemed;
-    if (requestedPoints > 0 && (!session || requestedPoints % 100 !== 0 || requestedPoints > Math.floor(balance / 100) * 100)) throw new BookingValidationError("La cantidad de puntos no es válida para esta reserva.");
+    if (requestedPoints % 100 !== 0) throw new BookingValidationError("La cantidad de puntos no es válida.");
+    if (requestedPoints > 0 && (!session || requestedPoints > Math.floor(balance / 100) * 100)) throw new BookingValidationError("La cantidad de puntos no es válida para esta reserva.");
     const preview = priceBreakdown(Number(service.basePrice), webDiscount, service.discountEligible, 0);
     const maxPoints = computeMaxRedeemable(balance, preview.discounted, maxPercent, Number(valueUsd));
     if (requestedPoints > maxPoints) throw new BookingValidationError("La cantidad de puntos supera el máximo permitido para esta reserva.");
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
   }
 
   let status = "PENDING";
-  let redirectUrl = `/reservar/gracias/${result.appointment.id}?pago=pendiente`;
+  let redirectUrl = `/reservar/gracias/${result.appointment.id}?pago=pendiente&t=${signPublicToken(result.appointment.id)}`;
   if (input.paymentMethod === "PAYPHONE") {
     const provider = getPaymentProvider("payphone");
     if (!provider) status = "PENDING_CONFIGURATION";
@@ -105,9 +108,11 @@ export async function POST(request: Request) {
         const created = await provider.createPayment({ orderId: result.order.id, amount: Number(result.order.total), currency: "USD", clientTransactionId, description: service.name, customer: { name: `${input.firstName} ${input.lastName}`, email: input.email, phone: input.phone } });
         if (created.providerRef) await db.payment.update({ where: { id: payment.id }, data: { providerTransactionId: created.providerRef } });
         status = created.status;
+        if (created.status === "REJECTED" || created.status === "CANCELLED" || created.status === "ERROR") await markOrderFailed(result.order.id);
         if (created.redirectUrl) redirectUrl = created.redirectUrl;
       } catch {
         await db.payment.update({ where: { id: payment.id }, data: { status: "ERROR" } });
+        await markOrderFailed(result.order.id);
         status = "ERROR";
       }
     }

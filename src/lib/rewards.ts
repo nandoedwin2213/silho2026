@@ -3,6 +3,52 @@ import type { Prisma, PointsReason, RewardTier } from "@prisma/client";
 import { db } from "./db";
 import { getSetting } from "./settings";
 
+export type PointsLedgerTransaction = {
+  id: string;
+  points: number;
+  expiresAt: Date | null;
+  expiredHandled?: boolean;
+  createdAt?: Date;
+};
+
+export function allocateExpirations(transactions: PointsLedgerTransaction[], now = new Date()) {
+  const soon = new Date(now);
+  soon.setDate(soon.getDate() + 60);
+  const grants = transactions
+    .filter((transaction) => transaction.points > 0)
+    .sort((a, b) => {
+      if (!a.expiresAt && !b.expiresAt) return (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0);
+      if (!a.expiresAt) return 1;
+      if (!b.expiresAt) return -1;
+      return a.expiresAt.getTime() - b.expiresAt.getTime();
+    });
+  let remainingNegative = Math.abs(transactions.filter((transaction) => transaction.points < 0).reduce((sum, transaction) => sum + transaction.points, 0));
+  const expired: { id: string; remainder: number }[] = [];
+  const expiringSoon: { id: string; points: number; expiresAt: Date }[] = [];
+
+  for (const grant of grants) {
+    const consumed = Math.min(grant.points, remainingNegative);
+    remainingNegative -= consumed;
+    const remainder = grant.points - consumed;
+    if (remainder <= 0) continue;
+    if (grant.expiresAt && grant.expiresAt <= now && !grant.expiredHandled) expired.push({ id: grant.id, remainder });
+    if (grant.expiresAt && grant.expiresAt > now && grant.expiresAt <= soon && !grant.expiredHandled) {
+      expiringSoon.push({ id: grant.id, points: remainder, expiresAt: grant.expiresAt });
+    }
+  }
+
+  return {
+    expired,
+    balance: transactions.reduce((sum, transaction) => sum + transaction.points, 0) - expired.reduce((sum, transaction) => sum + transaction.remainder, 0),
+    expiringSoon,
+  };
+}
+
+export async function getPointsBalance(client: Pick<Prisma.TransactionClient, "pointsTransaction">, patientId: string) {
+  const transactions = await client.pointsTransaction.findMany({ where: { patientId }, select: { points: true } });
+  return transactions.reduce((sum, transaction) => sum + transaction.points, 0);
+}
+
 export const TIERS: { tier: RewardTier; min: number; benefits: string[] }[] = [
   { tier: "ESSENTIAL", min: 0, benefits: ["Acumular puntos por acciones elegibles", "Acceder a recompensas disponibles"] },
   { tier: "GOLD", min: 500, benefits: ["Beneficios de Essential", "Acceso a beneficios de protocolos seleccionados"] },
@@ -34,12 +80,10 @@ export async function getPointsSummary(patientId: string) {
   const yearAgo = new Date(now);
   yearAgo.setMonth(yearAgo.getMonth() - 12);
   const transactions = await db.pointsTransaction.findMany({
-    where: {
-      patientId,
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }, { points: { lt: 0 } }],
-    },
+    where: { patientId },
     orderBy: { expiresAt: "asc" },
   });
+  const allocation = allocateExpirations(transactions);
   const balance = transactions.reduce((sum, transaction) => sum + transaction.points, 0);
   const earned12m = transactions.reduce(
     (sum, transaction) => sum + (transaction.createdAt >= yearAgo && transaction.points > 0 ? transaction.points : 0),
@@ -47,11 +91,7 @@ export async function getPointsSummary(patientId: string) {
   );
   const tier = [...TIERS].reverse().find((entry) => earned12m >= entry.min)?.tier ?? "ESSENTIAL";
   const next = TIERS.find((entry) => entry.min > earned12m);
-  const soon = new Date(now);
-  soon.setDate(soon.getDate() + 60);
-  const expiringSoon = transactions
-    .filter((transaction) => transaction.points > 0 && transaction.expiresAt && transaction.expiresAt <= soon)
-    .map((transaction) => ({ points: transaction.points, expiresAt: transaction.expiresAt as Date }));
+  const expiringSoon = allocation.expiringSoon.map(({ points, expiresAt }) => ({ points, expiresAt }));
 
   return { balance, earned12m, tier, ...(next ? { nextTier: { tier: next.tier, missing: next.min - earned12m } } : {}), expiringSoon };
 }
