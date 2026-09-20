@@ -1,0 +1,31 @@
+import Link from "next/link";
+import { ArrowRight, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/site/section-heading";
+import { db } from "@/lib/db";
+import { EARN_RULES, TIERS } from "@/lib/rewards";
+import { getSettings } from "@/lib/settings";
+import { getWebDiscountFor } from "@/lib/pricing";
+
+export const metadata = {
+  title: "Beneficios y puntos | SILHO Face Rewards",
+  description: "Conozca los beneficios de reservar en línea y el programa SILHO Face Rewards.",
+};
+
+export default async function BenefitsPage() {
+  const [valuation, rewards, settings] = await Promise.all([
+    db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, basePrice: true, discountEligible: true } }),
+    db.reward.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
+    getSettings(["WEB_TREATMENT_BONUS_USD", "WEB_BONUS_DAYS", "WEB_WEEKLY_SLOTS", "WEB_OFFER_VALID_UNTIL", "REWARDS_EXPIRY_MONTHS", "REWARDS_POINT_VALUE_USD"]),
+  ]);
+  const webDiscount = valuation ? await getWebDiscountFor(valuation) : 25;
+  return (
+    <main>
+      <section className="bg-navy px-6 py-20 text-white lg:px-10 lg:py-28"><div className="mx-auto max-w-7xl"><p className="text-xs uppercase tracking-[0.24em] text-gold-light">SILHO Face Rewards</p><h1 className="mt-5 max-w-3xl font-heading text-5xl tracking-tight md:text-7xl">Beneficios pensados para acompañar su ruta facial.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">Reserve en línea, sume puntos y acceda a beneficios con reglas claras.</p></div></section>
+      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10"><SectionHeading eyebrow="Beneficios web" title="Comience con una valoración facial" description="El beneficio se aplica a servicios elegibles y queda sujeto a las condiciones publicadas." /><div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">{[["Valoración web", `${webDiscount}% de descuento sobre el valor regular.`], ["Bono de tratamiento", `USD ${settings.WEB_TREATMENT_BONUS_USD ?? "50"} si agenda el tratamiento dentro de ${settings.WEB_BONUS_DAYS ?? "30"} días.`], ["Cupos web", `${settings.WEB_WEEKLY_SLOTS ?? "10"} espacios semanales destinados a reservas web.`], ["Vigencia", `Hasta ${settings.WEB_OFFER_VALID_UNTIL ?? "2026-12-31"}.`]].map(([title, text]) => <div key={title} className="rounded-2xl border bg-[#fafaf9] p-6"><p className="font-semibold text-gold">{title}</p><p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p></div>)}</div><p className="mt-6 text-xs leading-5 text-muted-foreground">No hay contadores ni promesas de disponibilidad. Los cupos y la vigencia se administran con la configuración vigente de SILHO.</p></section>
+      <section className="bg-[#fafaf9] px-6 py-20 lg:px-10"><div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2"><div><SectionHeading eyebrow="Cómo ganar puntos" title="Acumule puntos en acciones elegibles" /><div className="mt-8 space-y-3">{EARN_RULES.map((rule) => <div key={rule.reason} className="flex items-center justify-between gap-4 rounded-2xl border bg-white p-5"><span className="text-sm text-muted-foreground">{rule.reason.replaceAll("_", " ").toLowerCase()}</span><span className="text-sm font-semibold text-navy">{typeof rule.points === "number" ? `${rule.points} puntos` : rule.points}</span></div>)}</div></div><div><SectionHeading eyebrow="Qué puede canjear" title="Recompensas activas" />{rewards.length > 0 ? <div className="mt-8 space-y-3">{rewards.map((reward) => <div key={reward.id} className="rounded-2xl border bg-white p-5"><div className="flex items-center justify-between gap-4"><h3 className="font-heading text-lg text-navy">{reward.name}</h3><span className="text-sm font-semibold text-gold">{reward.pointsCost} puntos</span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">{reward.description}</p></div>)}</div> : <p className="mt-8 rounded-2xl border bg-white p-6 text-sm text-muted-foreground">Las recompensas se actualizarán cuando estén disponibles.</p>}</div></div></section>
+      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10"><SectionHeading eyebrow="Niveles" title="SILHO Face Rewards crece con su constancia" /><div className="mt-10 grid gap-5 md:grid-cols-3">{TIERS.map((tier) => <div key={tier.tier} className="rounded-3xl border p-7"><p className="text-xs uppercase tracking-[0.2em] text-gold">{tier.tier}</p><h2 className="mt-3 font-heading text-3xl text-navy">{tier.min} puntos</h2><ul className="mt-6 space-y-3">{tier.benefits.map((benefit) => <li key={benefit} className="flex gap-2 text-sm leading-6 text-muted-foreground"><Check className="mt-1 size-4 shrink-0 text-gold" />{benefit}</li>)}</ul></div>)}</div></section>
+      <section className="bg-[#f5f1e8] px-6 py-20 lg:px-10"><div className="mx-auto max-w-4xl"><SectionHeading eyebrow="Reglas del programa" title="Información importante" /><div className="mt-8 grid gap-4 md:grid-cols-2">{[`Los puntos vencen después de ${settings.REWARDS_EXPIRY_MONTHS ?? "12"} meses, según la fecha de cada acumulación.`, "El canje requiere una cuenta SILHO y se realiza por los canales habilitados.", "En devoluciones o anulaciones, los puntos otorgados pueden revertirse.", "Las promociones pueden tener reglas propias y no siempre son acumulables.", "Los puntos no son dinero, no se transfieren y no pueden retirarse en efectivo.", `El valor referencial actual es USD ${settings.REWARDS_POINT_VALUE_USD ?? "0.05"} por punto, sujeto a las reglas de canje.`].map((text) => <div key={text} className="rounded-2xl bg-white p-5 text-sm leading-6 text-muted-foreground">{text}</div>)}</div><div className="mt-8 flex flex-wrap gap-3"><Button asChild className="rounded-full bg-navy text-white hover:bg-navy/90"><Link href="/cuenta/registro">Crear cuenta <ArrowRight /></Link></Button><Button asChild variant="outline" className="rounded-full bg-transparent"><Link href="/cuenta/ingresar">Ingresar</Link></Button></div></div></section>
+    </main>
+  );
+}

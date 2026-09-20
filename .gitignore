@@ -42,3 +42,4 @@ next-env.d.ts
 
 # visual verification artifacts
 /.screenshots/
+/backups/

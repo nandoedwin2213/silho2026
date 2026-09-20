@@ -9,5 +9,7 @@ export const checkoutSchema = z.object({
   ciudad: z.string().trim().min(2).max(80),
   serviceId: z.string().min(1),
   paymentMethod: z.enum(["PAYPHONE", "TRANSFER", "CASH"]),
+  pointsRedeemed: z.coerce.number().int().min(0).default(0),
+  referralCode: z.string().trim().max(40).optional(),
   acceptTerms: z.literal(true),
 });

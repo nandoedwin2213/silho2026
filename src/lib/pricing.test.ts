@@ -10,4 +10,12 @@ describe("pricing", () => {
   it("excludes discounts for ineligible services", () => {
     expect(priceBreakdown(200, 10, false)).toEqual({ base: 200, discountPercent: 0, discounted: 200, savings: 0 });
   });
+
+  it("applies points discount after the promotional savings", () => {
+    expect(priceBreakdown(200, 10, true, 15)).toEqual({ base: 200, discountPercent: 10, discounted: 165, savings: 20 });
+  });
+
+  it("does not return a negative total", () => {
+    expect(priceBreakdown(100, 10, true, 200).discounted).toBe(0);
+  });
 });

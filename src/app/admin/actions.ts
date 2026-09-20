@@ -8,6 +8,8 @@ import { serviceAdminSchema } from "@/lib/validation/service";
 import { checkoutTotal } from "@/lib/order-total";
 import { z } from "zod";
 import { AppointmentStatus, LeadStatus, SubscriptionStatus } from "@prisma/client";
+import { markOrderPaid } from "@/lib/orders";
+import { awardPoints } from "@/lib/rewards";
 
 const idSchema = z.string().min(1);
 const settingSchema = z.object({ discount: z.coerce.number().min(0).max(50), whatsapp: z.string().min(7), instagram: z.string().url().or(z.literal("")), tiktok: z.string().url().or(z.literal("")), facebook: z.string().url().or(z.literal("")), surgical: z.boolean(), email: z.string().email(), instructions: z.string().min(5) });
@@ -49,9 +51,21 @@ export async function updateStatusAction(formData: FormData) {
   const id = idSchema.parse(formData.get("id"));
   const status = String(formData.get("status"));
   if (model === "lead") await db.lead.update({ where: { id }, data: { status: z.nativeEnum(LeadStatus).parse(status) } });
-  else if (model === "appointment") await db.appointment.update({ where: { id }, data: { status: z.nativeEnum(AppointmentStatus).parse(status) } });
+  else if (model === "appointment") {
+    const nextStatus = z.nativeEnum(AppointmentStatus).parse(status);
+    await db.$transaction(async (tx) => {
+      const appointment = await tx.appointment.update({ where: { id }, data: { status: nextStatus } });
+      if (nextStatus === "COMPLETED") {
+        const existing = await tx.pointsTransaction.findFirst({ where: { appointmentId: id, reason: "PUNCTUAL_ATTENDANCE" } });
+        if (!existing) await awardPoints(tx, { patientId: appointment.patientId, points: 25, reason: "PUNCTUAL_ATTENDANCE", description: "Cita completada en SILHO.", appointmentId: id });
+      }
+    });
+  }
   else if (model === "subscription") await db.subscription.update({ where: { id }, data: { status: z.nativeEnum(SubscriptionStatus).parse(status) } });
-  else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) await db.order.update({ where: { id }, data: { status: status as "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED", ...(status === "PAID" ? { paidAt: new Date() } : {}) } });
+  else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) {
+    if (status === "PAID") await markOrderPaid(id);
+    else await db.order.update({ where: { id }, data: { status: status as "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED" } });
+  }
   else throw new Error("Modelo o estado inválido.");
   revalidatePath(`/admin/${model === "appointment" ? "citas" : `${model}s`}`);
 }
@@ -69,8 +83,26 @@ export async function saveSettingsAction(formData: FormData) {
 export async function markOrderPaidAction(formData: FormData) {
   await requireAdmin();
   const id = idSchema.parse(formData.get("id"));
-  await db.order.update({ where: { id }, data: { status: "PAID", paidAt: new Date() } });
+  await markOrderPaid(id);
   revalidatePath("/admin/pedidos");
+}
+
+export async function adjustPointsAction(formData: FormData) {
+  await requireAdmin();
+  const points = z.coerce.number().int().refine((value) => value !== 0).parse(formData.get("points"));
+  const reason = z.enum(["PROTOCOL_COMPLETED", "PUNCTUAL_ATTENDANCE", "FOLLOW_UP", "ANNIVERSARY", "ADJUSTMENT"]).parse(formData.get("reason"));
+  const patientId = idSchema.parse(formData.get("patientId"));
+  const description = z.string().min(3).parse(formData.get("description"));
+  await db.$transaction((tx) => awardPoints(tx, { patientId, points, reason, description }));
+  revalidatePath("/admin/rewards");
+}
+
+export async function toggleRewardAction(formData: FormData) {
+  await requireAdmin();
+  const id = idSchema.parse(formData.get("id"));
+  const reward = await db.reward.findUniqueOrThrow({ where: { id }, select: { active: true } });
+  await db.reward.update({ where: { id }, data: { active: !reward.active } });
+  revalidatePath("/admin/rewards");
 }
 
 export async function saveCategoryAction(formData: FormData) {
@@ -140,8 +172,8 @@ export async function saveLocationAction(formData: FormData) {
 export async function saveBeforeAfterAction(formData: FormData) {
   await requireAdmin();
   const serviceId = String(formData.get("serviceId") || "");
-  const beforeAfterSchema = z.object({ title: z.string().min(2), serviceId: z.string().optional(), beforeImage: z.string().url(), afterImage: z.string().url(), patientConsent: z.literal(true), published: z.boolean(), description: z.string().optional() });
-  const parsed = beforeAfterSchema.parse({ title: formData.get("title"), serviceId: serviceId || undefined, beforeImage: formData.get("beforeImage"), afterImage: formData.get("afterImage"), patientConsent: formData.get("patientConsent") === "true", published: formData.get("published") === "true", description: String(formData.get("description") ?? "") || undefined });
+  const beforeAfterSchema = z.object({ title: z.string().min(2), serviceId: z.string().optional(), beforeImage: z.string().url(), afterImage: z.string().url(), patientConsent: z.literal(true), published: z.boolean(), description: z.string().optional(), problem: z.string().optional(), goal: z.string().optional(), techniques: z.string().optional(), sessions: z.string().optional(), evolution: z.string().optional(), routeSlug: z.string().optional() });
+  const parsed = beforeAfterSchema.parse({ title: formData.get("title"), serviceId: serviceId || undefined, beforeImage: formData.get("beforeImage"), afterImage: formData.get("afterImage"), patientConsent: formData.get("patientConsent") === "true", published: formData.get("published") === "true", description: String(formData.get("description") ?? "") || undefined, problem: String(formData.get("problem") ?? "") || undefined, goal: String(formData.get("goal") ?? "") || undefined, techniques: String(formData.get("techniques") ?? "") || undefined, sessions: String(formData.get("sessions") ?? "") || undefined, evolution: String(formData.get("evolution") ?? "") || undefined, routeSlug: String(formData.get("routeSlug") ?? "") || undefined });
   const data = { ...parsed, serviceId: parsed.serviceId || null, description: parsed.description || null };
   const id = String(formData.get("id") || "");
   if (id) await db.beforeAfter.update({ where: { id }, data });

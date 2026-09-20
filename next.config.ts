@@ -16,6 +16,19 @@ const nextConfig: NextConfig = {
       ],
     }];
   },
+  async redirects() {
+    return [
+      { source: "/trasplante-capilar", destination: "/", permanent: true },
+      { source: "/blefaroplastia", destination: "/rejuvenecimiento-facial", permanent: true },
+      { source: "/rinoplastia", destination: "/rejuvenecimiento-facial", permanent: true },
+      { source: "/agenda", destination: "/reservar", permanent: true },
+      { source: "/tratamientos/medicina-capilar", destination: "/", permanent: true },
+      { source: "/tratamientos/trasplante-capilar", destination: "/", permanent: true },
+      { source: "/tratamientos/blefaroplastia", destination: "/rejuvenecimiento-facial", permanent: true },
+      { source: "/tratamientos/rinoplastia", destination: "/rejuvenecimiento-facial", permanent: true },
+      { source: "/tratamientos/otros-procedimientos", destination: "/rejuvenecimiento-facial", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
