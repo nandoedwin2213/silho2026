@@ -25,6 +25,7 @@ enum LeadStatus {
 }
 
 enum AppointmentStatus {
+  PENDING
   REQUESTED
   CONFIRMED
   COMPLETED
@@ -283,7 +284,7 @@ model Appointment {
   service        Service           @relation(fields: [serviceId], references: [id])
   location       Location          @relation(fields: [locationId], references: [id])
   professional   Professional      @relation(fields: [professionalId], references: [id])
-  orders         Order[]
+  order          Order?
 
   @@map("appointments")
 }
@@ -292,7 +293,7 @@ model Order {
   id              String        @id @default(cuid())
   patientId       String        @map("patient_id")
   serviceId       String        @map("service_id")
-  appointmentId   String?       @map("appointment_id")
+  appointmentId   String?       @unique @map("appointment_id")
   basePrice       Decimal       @db.Decimal(10, 2) @map("base_price")
   discountPercent Decimal       @db.Decimal(5, 2) @map("discount_percent")
   discountAmount  Decimal       @db.Decimal(10, 2) @map("discount_amount")
