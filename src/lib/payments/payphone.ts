@@ -31,7 +31,11 @@ export const payphone: PaymentProvider = {
     });
     if (!response.ok) throw new Error(`PayPhone Prepare failed: ${response.status}`);
     const raw = await response.json();
-    return { redirectUrl: raw.link ?? raw.url, providerRef: String(raw.id ?? ""), status: mapStatus(raw.status) };
+    return {
+      redirectUrl: raw.payWithCard ?? raw.payWithPayPhone ?? raw.link ?? raw.url,
+      providerRef: String(raw.paymentId ?? raw.id ?? ""),
+      status: mapStatus(raw.status),
+    };
   },
   async confirmPayment(input) {
     if (!this.isConfigured()) return { status: "PENDING_CONFIGURATION", raw: {} };
