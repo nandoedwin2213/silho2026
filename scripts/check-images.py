@@ -18,6 +18,11 @@ def fetch_photo(photo_id):
     return json.loads(output)
 
 
+def check(condition, message):
+    if not condition:
+        raise SystemExit(f"ERROR: {message}")
+
+
 def is_jpeg(path):
     data = path.read_bytes()
     return len(data) > 20 * 1024 and data[:2] == b"\xff\xd8" and data[-2:] == b"\xff\xd9"
@@ -27,15 +32,15 @@ def main():
     credits = json.loads(CREDITS_PATH.read_text())
     entries = list(credits.items())
     ids = [entry["id"] for _, entry in entries]
-    assert len(ids) == len(set(ids)), "duplicate Unsplash IDs"
+    check(len(ids) == len(set(ids)), "duplicate Unsplash IDs")
 
     digests = {}
     for key, entry in entries:
         path = IMAGES / f"{key}.jpg"
-        assert path.exists(), f"missing image: {path}"
-        assert is_jpeg(path), f"invalid JPEG or image too small: {path}"
+        check(path.exists(), f"missing image: {path}")
+        check(is_jpeg(path), f"invalid JPEG or image too small: {path}")
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        assert digest not in digests, f"byte-identical images: {digests[digest]} and {path}"
+        check(digest not in digests, f"byte-identical images: {digests[digest]} and {path}")
         digests[digest] = path
 
     plus = []
@@ -47,7 +52,7 @@ def main():
         print(f"{index}/{len(entries)} {key}: {entry['id']}", flush=True)
         time.sleep(0.12)
 
-    assert not plus, f"Unsplash+ photos: {plus}"
+    check(not plus, f"Unsplash+ photos: {plus}")
     print(f"OK: {len(entries)} credits, unique IDs, valid JPEGs, unique bytes, no Unsplash+ photos")
 
 
