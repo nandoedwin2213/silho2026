@@ -6,7 +6,7 @@ import { BookOpen, Building2, CalendarDays, CreditCard, Database, FileImage, Hea
 import { useState } from "react";
 import { logoutAction } from "./actions";
 
-const links: [string, string, LucideIcon][] = [["/admin", "Dashboard", LayoutDashboard], ["/admin/servicios", "Servicios", Stethoscope], ["/admin/categorias", "Categorías", Tag], ["/admin/pacientes", "Pacientes", Users], ["/admin/leads", "Leads", HeartPulse], ["/admin/citas", "Citas", CalendarDays], ["/admin/pedidos", "Pedidos / Pagos", Wallet], ["/admin/suscripciones", "Suscripciones", CreditCard], ["/admin/antes-y-despues", "Antes y después", FileImage], ["/admin/blog", "Blog", BookOpen], ["/admin/sedes", "Sedes", Building2], ["/admin/profesional", "Profesional", Database], ["/admin/configuracion", "Configuración", Settings]];
+const links: [string, string, LucideIcon][] = [["/admin", "Dashboard", LayoutDashboard], ["/admin/servicios", "Servicios", Stethoscope], ["/admin/categorias", "Categorías", Tag], ["/admin/pacientes", "Pacientes", Users], ["/admin/leads", "Leads", HeartPulse], ["/admin/citas", "Citas", CalendarDays], ["/admin/pedidos", "Pedidos / Pagos", Wallet], ["/admin/rewards", "Recompensas", Wallet], ["/admin/suscripciones", "Suscripciones", CreditCard], ["/admin/antes-y-despues", "Antes y después", FileImage], ["/admin/blog", "Blog", BookOpen], ["/admin/sedes", "Sedes", Building2], ["/admin/profesional", "Profesional", Database], ["/admin/configuracion", "Configuración", Settings]];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

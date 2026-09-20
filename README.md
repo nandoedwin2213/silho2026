@@ -1,6 +1,6 @@
-# SILHO – Medicina Estética
+# SILHO – Medicina Estética Facial
 
-SILHO es una plataforma comercial para medicina estética facial, capilar y de cabeza y cuello, creada para la consulta del Dr. Edwin Ayala en Ecuador. Incluye sitio público en español, catálogo de tratamientos, agenda, checkout, contenidos, leads y un panel administrativo preparado para crecer hacia CRM, membresías, pagos y seguimiento estético.
+SILHO es una plataforma comercial de medicina estética exclusivamente facial, creada para la consulta del Dr. Edwin Ayala en Ecuador. Incluye sitio público en español, rutas faciales, reserva, checkout, Face Rewards, contenidos, leads y un panel administrativo.
 
 El contenido médico comunica posibilidades de mejora y valoración personalizada; no ofrece diagnósticos automáticos, resultados garantizados ni promesas de “100% eliminación”.
 
@@ -84,6 +84,7 @@ El sitio queda en `http://localhost:3000` y el panel en `http://localhost:3000/a
 | `npm run db:migrate` | Migraciones de desarrollo. |
 | `npx prisma migrate deploy` | Aplica migraciones existentes en producción. |
 | `npm run db:seed` | Seed idempotente. |
+| `npm run db:backup` | Exporta el catálogo y contenidos a `backups/catalog-<ISO>.json`. |
 | `npm run db:reset` | Migrate reset sin seed automático y seed explícito. |
 
 ## Variables de entorno
@@ -101,8 +102,11 @@ El sitio queda en `http://localhost:3000` y el panel en `http://localhost:3000/a
 | `PAYPHONE_CLIENT_SECRET` | Client secret server-only de PayPhone. |
 | `PAYPHONE_ENVIRONMENT` | `sandbox` o producción. |
 | `RESEND_API_KEY` | API key opcional para correo transaccional. |
+| `EMAIL_FROM` | Remitente de Resend; se usa junto con `RESEND_API_KEY`. |
+| `NEXT_PUBLIC_GA_ID` | Identificador opcional de Google Analytics 4. |
+| `CRON_SECRET` | Bearer secret para el cron de expiración de puntos. |
 
-La configuración operativa (`PRONTO_PAGO_DISCOUNT`, WhatsApp, redes, correo, transferencia y precios quirúrgicos) se administra desde `Configuración` y se almacena en `Setting`.
+La configuración operativa (`WEB_*`, `REWARDS_*`, `CLINIC_HOURS`, WhatsApp, redes, correo y transferencia) se administra desde `Configuración` y se almacena en `Setting`.
 
 Las citas se almacenan en la zona horaria de la clínica: `America/Guayaquil`.
 
@@ -119,7 +123,7 @@ Las citas se almacenan en la zona horaria de la clínica: `America/Guayaquil`.
 4. Despliega, conecta el dominio personalizado y actualiza `NEXT_PUBLIC_APP_URL` a `https://<dominio>`.
 5. Ejecuta el seed de producción de forma controlada y cambia las credenciales de desarrollo.
 
-No se necesita `vercel.json`; el Build Command se configura directamente en Vercel.
+`vercel.json` configura el cron semanal de expiración de puntos. El Build Command se configura directamente en Vercel.
 
 ## PayPhone
 
