@@ -94,6 +94,9 @@ def search(q):
             break
     return results
 
+def is_free(r):
+    return "plus.unsplash.com" not in r["urls"]["raw"]
+
 def photo(photo_id):
     url = f"https://unsplash.com/napi/photos/{urllib.parse.quote(photo_id)}"
     return json.loads(subprocess.check_output(["curl", "--retry", "3", "--retry-all-errors", "-s", url]))
@@ -110,10 +113,13 @@ for key, q in QUERIES.items():
             raise RuntimeError(f"Unsplash photo ID already used for {key}: {r['id']}")
         if not (r.get("alt_description") or r.get("description")):
             raise RuntimeError(f"Unsplash photo has no alt text for {key}: {r['id']}")
+        if not is_free(r):
+            raise RuntimeError(f"Unsplash+ photo not allowed for {key}: {r['id']}")
     else:
         results = [
             r for r in search(q)
             if r.get("id") not in CACHE
+            and is_free(r)
             and (r.get("alt_description") or r.get("description"))
         ]
         idx = PICK.get(key, 0)

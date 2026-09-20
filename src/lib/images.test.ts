@@ -22,5 +22,6 @@ describe("service images", () => {
   it("falls back to the category image when no topic matches", () => {
     expect(serviceTopic("Tratamiento personalizado")).toBeNull();
     expect(serviceImage({ name: "Tratamiento personalizado" }, "acne")).toBe("/images/cat-acne.jpg");
+    expect(serviceImage({ name: "Seguimiento mensual" }, "acne")).toBe("/images/cat-acne.jpg");
   });
 });

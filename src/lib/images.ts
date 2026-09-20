@@ -93,7 +93,7 @@ const SERVICE_TOPIC_KEYWORDS: [string, string[]][] = [
   ["manos", ["manos"]],
   ["cejas", ["ceja"]],
   ["capilar", ["capilar", "alopecia", "anticaida", "fue", "injerto", "coronilla", "entradas", "barba"]],
-  ["valoracion", ["valoracion", "evaluacion", "consulta", "diagnostico", "seguimiento"]],
+  ["valoracion", ["valoracion", "evaluacion", "consulta", "diagnostico"]],
 ];
 
 export const SITE_IMAGES = {
