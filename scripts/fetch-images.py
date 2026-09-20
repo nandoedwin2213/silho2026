@@ -70,6 +70,7 @@ QUERIES = {
 }
 
 PICK = json.loads(os.environ.get("PICK", "{}"))
+PICK_ID = json.loads(os.environ.get("PICK_ID", "{}"))
 ONLY = {key.strip() for key in os.environ.get("ONLY", "").split(",") if key.strip()}
 CREDITS_PATH = os.path.join(OUT, "credits.json")
 with open(CREDITS_PATH) as f:
@@ -93,19 +94,32 @@ def search(q):
             break
     return results
 
+def photo(photo_id):
+    url = f"https://unsplash.com/napi/photos/{urllib.parse.quote(photo_id)}"
+    return json.loads(subprocess.check_output(["curl", "--retry", "3", "--retry-all-errors", "-s", url]))
+
 for key, q in QUERIES.items():
     if key not in selected:
         continue
     dest = os.path.join(OUT, f"{key}.jpg")
-    results = [
-        r for r in search(q)
-        if r.get("id") not in CACHE
-        and (r.get("alt_description") or r.get("description"))
-    ]
-    idx = PICK.get(key, 0)
-    if len(results) <= idx:
-        raise RuntimeError(f"No unique image with alt text found for {key}")
-    r = results[idx]
+    if key in PICK_ID:
+        r = photo(PICK_ID[key])
+        if r.get("id") != PICK_ID[key]:
+            raise RuntimeError(f"Unsplash photo ID mismatch for {key}")
+        if r.get("id") in CACHE:
+            raise RuntimeError(f"Unsplash photo ID already used for {key}: {r['id']}")
+        if not (r.get("alt_description") or r.get("description")):
+            raise RuntimeError(f"Unsplash photo has no alt text for {key}: {r['id']}")
+    else:
+        results = [
+            r for r in search(q)
+            if r.get("id") not in CACHE
+            and (r.get("alt_description") or r.get("description"))
+        ]
+        idx = PICK.get(key, 0)
+        if len(results) <= idx:
+            raise RuntimeError(f"No unique image with alt text found for {key}")
+        r = results[idx]
     base = r["urls"]["raw"].split("?")[0]
     subprocess.check_call(["curl", "--fail", "-sL", "-o", dest, base + "?w=1600&q=78&fm=jpg&fit=crop"])
     CACHE.add(r["id"])
