@@ -8,6 +8,7 @@ import { serviceAdminSchema } from "@/lib/validation/service";
 import { checkoutTotal } from "@/lib/order-total";
 import { z } from "zod";
 import { AppointmentStatus, LeadStatus, SubscriptionStatus } from "@prisma/client";
+import { markOrderPaid } from "@/lib/orders";
 
 const idSchema = z.string().min(1);
 const settingSchema = z.object({ discount: z.coerce.number().min(0).max(50), whatsapp: z.string().min(7), instagram: z.string().url().or(z.literal("")), tiktok: z.string().url().or(z.literal("")), facebook: z.string().url().or(z.literal("")), surgical: z.boolean(), email: z.string().email(), instructions: z.string().min(5) });
@@ -51,7 +52,10 @@ export async function updateStatusAction(formData: FormData) {
   if (model === "lead") await db.lead.update({ where: { id }, data: { status: z.nativeEnum(LeadStatus).parse(status) } });
   else if (model === "appointment") await db.appointment.update({ where: { id }, data: { status: z.nativeEnum(AppointmentStatus).parse(status) } });
   else if (model === "subscription") await db.subscription.update({ where: { id }, data: { status: z.nativeEnum(SubscriptionStatus).parse(status) } });
-  else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) await db.order.update({ where: { id }, data: { status: status as "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED", ...(status === "PAID" ? { paidAt: new Date() } : {}) } });
+  else if (model === "order" && ["PAID", "PENDING", "FAILED", "CANCELLED", "REFUNDED"].includes(status)) {
+    if (status === "PAID") await markOrderPaid(id);
+    else await db.order.update({ where: { id }, data: { status: status as "PENDING" | "FAILED" | "CANCELLED" | "REFUNDED" } });
+  }
   else throw new Error("Modelo o estado inválido.");
   revalidatePath(`/admin/${model === "appointment" ? "citas" : `${model}s`}`);
 }
@@ -69,7 +73,7 @@ export async function saveSettingsAction(formData: FormData) {
 export async function markOrderPaidAction(formData: FormData) {
   await requireAdmin();
   const id = idSchema.parse(formData.get("id"));
-  await db.order.update({ where: { id }, data: { status: "PAID", paidAt: new Date() } });
+  await markOrderPaid(id);
   revalidatePath("/admin/pedidos");
 }
 

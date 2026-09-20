@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getPaymentProvider } from "@/lib/payments";
 import { toPaymentStatus } from "@/lib/payments/status";
+import { markOrderPaid } from "@/lib/orders";
 
 export default async function PayphoneResponsePage({ searchParams }: { searchParams: Promise<{ id?: string; clientTransactionId?: string; cancelled?: string }> }) {
   const query = await searchParams;
@@ -15,7 +16,7 @@ export default async function PayphoneResponsePage({ searchParams }: { searchPar
       const paymentStatus = toPaymentStatus(confirmation.status);
       await db.payment.update({ where: { id: payment.id }, data: { providerTransactionId: query.id, status: paymentStatus, rawResponse: JSON.parse(JSON.stringify(confirmation.raw)) } });
       if (paymentStatus === "APPROVED") {
-        await db.order.update({ where: { id: payment.orderId }, data: { status: "PAID", paidAt: new Date() } });
+        await markOrderPaid(payment.orderId);
         result = "Tu pago fue aprobado y tu solicitud está confirmada.";
       } else if (confirmation.status === "PENDING_CONFIGURATION") result = "Pago en línea en configuración — te contactaremos para completar el pago.";
       else result = "No pudimos aprobar el pago. Te contactaremos para ayudarte.";
