@@ -1,14 +1,8 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./mobile-nav";
-
-const links = [
-  ["/tratamientos", "Tratamientos"],
-  ["/dr-edwin-ayala", "Dr. Edwin Ayala"],
-  ["/trasplante-capilar", "Trasplante capilar"],
-  ["/blog", "Blog"],
-  ["/agenda", "Agenda"],
-];
+import { navLinks } from "@/lib/nav";
 
 export function Header() {
   return (
@@ -19,10 +13,11 @@ export function Header() {
           <span className="block text-[0.58rem] uppercase tracking-[0.25em] text-gold">Medicina Estética</span>
         </Link>
         <nav className="hidden items-center gap-6 lg:flex">
-          {links.map(([href, label]) => <Link key={href} href={href} className="text-sm text-muted-foreground transition hover:text-navy">{label}</Link>)}
+          {navLinks.slice(1, 7).map(([href, label]) => <Link key={href} href={href} className="text-sm text-muted-foreground transition hover:text-navy">{label}</Link>)}
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild className="hidden rounded-full bg-navy px-5 text-white hover:bg-navy/90 sm:inline-flex"><Link href="/agenda">Agenda tu valoración</Link></Button>
+          <Link href="/cuenta" className="hidden items-center gap-1.5 px-2 text-sm text-muted-foreground transition hover:text-navy sm:inline-flex"><User className="size-4" /> Mi cuenta</Link>
+          <Button asChild className="hidden rounded-full bg-navy px-5 text-white hover:bg-navy/90 sm:inline-flex"><Link href="/reservar">Reservar valoración</Link></Button>
           <MobileNav />
         </div>
       </div>

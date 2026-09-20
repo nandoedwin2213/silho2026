@@ -11,7 +11,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const service = await db.service.findUnique({ where: { slug } });
   if (!service || !service.active) notFound();
-  if (!isPurchasable(service)) redirect(`/agenda?servicio=${service.slug}`);
+  if (!isPurchasable(service)) redirect(`/reservar?servicio=${service.slug}`);
   const [discount, transferInstructions] = await Promise.all([getPromptPaymentDiscount(), getSetting("BANK_TRANSFER_INSTRUCTIONS", "Te contactaremos para compartir los datos de transferencia y validar tu pago.")]);
   const breakdown = { base: Number(service.basePrice), discount: service.discountEligible ? discount : 0 };
   const total = Math.round((breakdown.base * (1 - breakdown.discount / 100) + Number.EPSILON) * 100) / 100;
