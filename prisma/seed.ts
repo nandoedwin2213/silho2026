@@ -22,6 +22,12 @@ type ServiceSeed = {
   concerns?: string[];
 };
 
+const LOCATIONS = [
+  { city: "Salinas", address: "Chipipe, frente a la base aérea", mapsUrl: "https://maps.google.com/?q=-2.201090,-80.984108" },
+  { city: "Quito", address: "Portugal y Catalina Aldáz, Edificio Catalina Plaza, piso 5, oficina 509", mapsUrl: "https://maps.google.com/?q=Edificio+Catalina+Plaza,+Portugal+y+Catalina+Ald%C3%A1z,+Quito" },
+  { city: "Guayaquil", address: "Edificio The Point, 2do piso, consultorio 208 (Puerto Santa Ana)", mapsUrl: "https://maps.app.goo.gl/Pr5HTuB5sWU69mJf8" },
+];
+
 const categorySeeds = [
   ["Valoración", "valoracion", "Evaluación médica para entender su rostro y definir un plan correcto.", "/images/cat-valoracion.jpg"],
   ["Toxina botulínica", "toxina-botulinica", "Opciones faciales para suavizar líneas y conservar su expresión.", "/images/cat-toxina-botulinica.jpg"],
@@ -422,11 +428,12 @@ async function main() {
     await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value } });
   }
 
-  for (const [order, name] of ["Salinas", "Quito", "Guayaquil"].entries()) {
+  for (const [order, location] of LOCATIONS.entries()) {
+    const data = { name: location.city, city: location.city, address: location.address, mapsUrl: location.mapsUrl, order, active: true };
     await prisma.location.upsert({
-      where: { id: `location-${slugify(name)}` },
-      update: { name, city: name, address: "Dirección por configurar", order, active: true },
-      create: { id: `location-${slugify(name)}`, name, city: name, address: "Dirección por configurar", order },
+      where: { id: `location-${slugify(location.city)}` },
+      update: data,
+      create: { id: `location-${slugify(location.city)}`, ...data },
     });
   }
   await prisma.professional.upsert({

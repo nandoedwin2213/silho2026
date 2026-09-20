@@ -3,7 +3,7 @@ import { Camera, Mail, MapPin, Music2, Phone, Users } from "lucide-react";
 import { navLinks, patientLinks } from "@/lib/nav";
 
 type FooterProps = {
-  locations: { name: string; city: string; address: string }[];
+  locations: { name: string; city: string; address: string; mapsUrl?: string | null }[];
   settings: Record<string, string | null>;
 };
 
@@ -31,7 +31,7 @@ export function Footer({ locations, settings }: FooterProps) {
         </div>
         <div>
           <p className="font-semibold text-navy">Sedes y legal</p>
-          <div className="mt-4 space-y-3">{locations.map((location) => <div key={location.name} className="flex gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 size-4 shrink-0 text-gold" /><span>{location.city}<br />{location.address}</span></div>)}</div>
+          <div className="mt-4 space-y-3">{locations.map((location) => <div key={location.name} className="flex gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 size-4 shrink-0 text-gold" /><span>{location.city}<br />{location.address}{location.mapsUrl && <><br /><a href={location.mapsUrl} target="_blank" rel="noreferrer" className="text-navy hover:text-gold">Ver mapa →</a></>}</span></div>)}</div>
           <p className="mt-4 text-sm text-muted-foreground">{settings.CLINIC_HOURS ?? "Lunes a sábado, 09:00–18:00"}</p>
           <nav className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
             <Link href="/contacto" className="transition hover:text-navy">Contacto</Link><Link href="/privacidad" className="transition hover:text-navy">Privacidad</Link><Link href="/terminos" className="transition hover:text-navy">Términos</Link><Link href="/consentimiento-datos" className="transition hover:text-navy">Consentimiento</Link><Link href="/politicas" className="transition hover:text-navy">Políticas de cita</Link>

@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [locations, settings] = await Promise.all([
-    db.location.findMany({ where: { active: true }, orderBy: { order: "asc" }, select: { name: true, city: true, address: true } }),
+    db.location.findMany({ where: { active: true }, orderBy: { order: "asc" }, select: { name: true, city: true, address: true, mapsUrl: true } }),
     getSettings(["WHATSAPP_NUMBER", "INSTAGRAM_URL", "TIKTOK_URL", "FACEBOOK_URL", "CLINIC_HOURS", "CLINIC_EMAIL"]),
   ]);
   const adminSession = await getSession();
