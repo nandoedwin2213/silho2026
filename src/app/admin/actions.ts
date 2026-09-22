@@ -31,7 +31,7 @@ export async function saveServiceAction(formData: FormData) {
   await requireAdmin();
   const parsed = serviceAdminSchema.parse({
     name: formData.get("name"), slug: formData.get("slug"), categoryId: formData.get("categoryId"), description: formData.get("description"), shortDescription: formData.get("shortDescription"), basePrice: formData.get("basePrice"), priceFrom: formData.get("priceFrom") === "true", showPrice: formData.get("showPrice") === "true", discountEligible: formData.get("discountEligible") === "true", requiresMedicalAssessment: formData.get("requiresMedicalAssessment") === "true", requiresManualQuote: formData.get("requiresManualQuote") === "true", isSurgical: formData.get("isSurgical") === "true", active: formData.get("active") !== "false", featured: formData.get("featured") === "true", durationMinutes: formData.get("durationMinutes") || undefined, image: formData.get("image") || "",
-    concerns: formData.getAll("concerns"),
+    webPrice: formData.get("webPrice") || undefined, concerns: formData.getAll("concerns"),
   });
   const { concerns: concernSlugs, ...data } = parsed;
   const id = String(formData.get("id") || "");

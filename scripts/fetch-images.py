@@ -127,6 +127,13 @@ QUERIES = {
     "svc-cicatrices-acne-protocolo-para-cicatrices-de-acne": "clinic treatment plan doctor writing",
     "svc-perfilamiento-facial-nariz": "nose profile close up woman side",
     "svc-toxina-botulinica-maseteros": "jaw clenching man face profile",
+    "svc-knee-hyaluron": "knee physiotherapy consultation healthy movement",
+    "svc-knee-hyaluron-2": "woman walking knee joint health physiotherapy",
+    "svc-joint-prp": "knee joint health movement clinic",
+    "svc-medical-imaging-rx": "doctor reviewing x ray radiograph clinic",
+    "svc-medical-imaging-eco": "doctor using ultrasound scanner medical consultation",
+    "svc-metabolic-heart-check": "doctor reviewing electrocardiogram stethoscope clinic",
+    "cat-medicina-articular": "knee physiotherapy medical consultation",
 }
 
 PICK = json.loads(os.environ.get("PICK", "{}"))

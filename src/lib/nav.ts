@@ -1,11 +1,12 @@
 export const navLinks = [
+  ["/tratamientos", "Tratamientos y precios web"],
   ["/", "Inicio"],
-  ["/rejuvenecimiento-facial", "Rejuvenecimiento facial"],
+  ["/rejuvenecimiento-facial", "Rejuvenecimiento"],
   ["/acne", "Acné"],
-  ["/cicatrices-acne", "Cicatrices de acné"],
+  ["/cicatrices-acne", "Cicatrices"],
   ["/casos-clinicos", "Casos clínicos"],
   ["/dr-edwin-ayala", "Dr. Edwin Ayala"],
-  ["/beneficios", "Beneficios y puntos"],
+  ["/beneficios", "Beneficios"],
 ] as const;
 
 export const patientLinks = [
@@ -15,5 +16,5 @@ export const patientLinks = [
   ["/casos-clinicos", "Casos clínicos"],
   ["/blog", "Blog"],
   ["/membresias", "Programas All Inclusive"],
-  ["/tratamientos", "Catálogo completo"],
+  ["/tratamientos", "Tratamientos y precios web"],
 ] as const;

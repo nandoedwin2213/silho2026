@@ -9,7 +9,7 @@ import { priceBreakdown } from "@/lib/pricing-core";
 import { routeList, type RouteSlug } from "@/lib/routes";
 
 type Location = { id: string; name: string; city: string; address: string };
-type Service = { id: string; name: string; basePrice: number };
+type Service = { id: string; name: string; basePrice: number; webPrice?: number };
 type Patient = { firstName: string; lastName: string; documentId: string; email: string; phone: string; city: string | null };
 type Props = { locations: Location[]; service: Service; webDiscount: number; bonusUsd: string; bonusDays: string; offerUntil: string; pointsValue: number; patient?: Patient; pointsBalance: number; initialObjective?: RouteSlug; initialCity?: string };
 
@@ -32,8 +32,8 @@ export function BookingFlow({ locations, service, webDiscount, bonusUsd, bonusDa
   const location = locations.find((item) => item.id === locationId);
   const selectedRoute = routeList.find((route) => route.slug === objective);
   const maxPoints = Math.floor(pointsBalance / 100) * 100;
-  const previewTotal = Math.max(0, service.basePrice * (1 - (paymentMethod === "PAYPHONE" ? webDiscount : 0) / 100) - pointsRedeemed * pointsValue);
-  const webBreakdown = priceBreakdown(service.basePrice, webDiscount, true);
+  const webBreakdown = priceBreakdown(service.basePrice, webDiscount, true, 0, service.webPrice);
+  const previewTotal = Math.max(0, (paymentMethod === "PAYPHONE" ? webBreakdown.discounted : service.basePrice) - pointsRedeemed * pointsValue);
 
   useEffect(() => {
     if (!locationId || !date) return;
