@@ -17,8 +17,8 @@ export const serviceAdminSchema = z.object({
   active: z.boolean().default(true),
   featured: z.boolean().default(false),
   durationMinutes: z.coerce.number().int().positive().optional(),
-  image: z.string().url().optional().or(z.literal("")),
+  image: z.string().refine((value) => value === "" || value.startsWith("/") || /^https?:\/\//i.test(value), { message: "Debe ser una URL https o una ruta que empiece por /" }).optional(),
   concerns: z.array(z.string()).default([]),
 }).superRefine((value, context) => {
-  if (value.webPrice != null && value.webPrice > value.basePrice) context.addIssue({ code: "custom", path: ["webPrice"], message: "El precio web no puede superar el precio regular." });
+  if (value.webPrice != null && value.webPrice > value.basePrice) context.addIssue({ code: "custom", path: ["webPrice"], message: "El precio web no puede ser mayor que el precio regular" });
 });
