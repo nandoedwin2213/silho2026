@@ -45,12 +45,12 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [locations, settings] = await Promise.all([
     db.location.findMany({ where: { active: true }, orderBy: { order: "asc" }, select: { name: true, city: true, address: true, mapsUrl: true } }),
-    getSettings(["WHATSAPP_NUMBER", "INSTAGRAM_URL", "TIKTOK_URL", "FACEBOOK_URL", "CLINIC_HOURS", "CLINIC_EMAIL"]),
+    getSettings(["WHATSAPP_NUMBER", "INSTAGRAM_URL", "TIKTOK_URL", "FACEBOOK_URL", "CLINIC_HOURS", "CLINIC_EMAIL", "PRONTO_PAGO_DISCOUNT", "WEB_ASSESSMENT_DISCOUNT"]),
   ]);
   const adminSession = await getSession();
   return (
     <html lang="es" className={`${manrope.variable} ${sora.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593989049001"} /></>}>{children}</SiteChrome><Analytics /><Toaster /></body>
+      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} webDiscount={Number(settings.PRONTO_PAGO_DISCOUNT ?? "10")} assessmentDiscount={Number(settings.WEB_ASSESSMENT_DISCOUNT ?? "25")} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593989049001"} /></>}>{children}</SiteChrome><Analytics /><Toaster /></body>
     </html>
   );
 }
