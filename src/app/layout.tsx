@@ -50,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const adminSession = await getSession();
   return (
     <html lang="es" className={`${manrope.variable} ${sora.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} webDiscount={Number(settings.PRONTO_PAGO_DISCOUNT ?? "10")} assessmentDiscount={Number(settings.WEB_ASSESSMENT_DISCOUNT ?? "25")} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593989049001"} /></>}>{children}</SiteChrome><Analytics /><Toaster /></body>
+      <body className="min-h-full flex flex-col"><SiteChrome adminSession={Boolean(adminSession)} assessmentDiscount={Number(settings.WEB_ASSESSMENT_DISCOUNT ?? "25")} header={<Header />} footer={<><Footer locations={locations} settings={settings} /><WhatsAppButton number={settings.WHATSAPP_NUMBER ?? "593989049001"} /></>}>{children}</SiteChrome><Analytics /><Toaster /></body>
     </html>
   );
 }

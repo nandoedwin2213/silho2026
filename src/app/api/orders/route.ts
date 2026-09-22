@@ -28,27 +28,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Seleccione una fecha válida entre hoy y los próximos 60 días; no atendemos domingos." }, { status: 400 });
     }
   }
-  if (input.locationId) {
-    const location = await db.location.findFirst({ where: { id: input.locationId, active: true }, select: { id: true } });
-    if (!location) return NextResponse.json({ error: "La sede seleccionada no está disponible." }, { status: 400 });
-  }
+  const selectedLocation = input.locationId
+    ? await db.location.findFirst({ where: { id: input.locationId, active: true }, select: { id: true, city: true } })
+    : null;
+  if (input.locationId && !selectedLocation) return NextResponse.json({ error: "La sede seleccionada no está disponible." }, { status: 400 });
   const service = await db.service.findFirst({ where: { id: input.serviceId, active: true } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
   const session = await getPatientSession();
-  const discount = input.paymentMethod === "PAYPHONE" ? await getWebDiscountFor(service) : 0;
+  const discount = await getWebDiscountFor(service);
   const settings = await getSettings(["REWARDS_MAX_REDEEM_PERCENT", "REWARDS_POINT_VALUE_USD"]);
   const pointValue = Number(settings.REWARDS_POINT_VALUE_USD ?? "0.05");
-  const regularBreakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible, 0, input.paymentMethod === "PAYPHONE" ? Number(service.webPrice) : null);
+  const webPrice = service.webPrice == null ? null : Number(service.webPrice);
+  const regularBreakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible, 0, webPrice);
   const maxPoints = session ? computeMaxRedeemable(await getPointsBalance(db, session.patientId), regularBreakdown.discounted, Number(settings.REWARDS_MAX_REDEEM_PERCENT ?? "20"), pointValue) : 0;
   if (input.pointsRedeemed % 100 !== 0) return NextResponse.json({ error: "La cantidad de puntos no es válida." }, { status: 400 });
   if (input.pointsRedeemed > maxPoints) return NextResponse.json({ error: "La cantidad de puntos supera el máximo permitido." }, { status: 400 });
   const pointsDiscount = pointsToUsd(input.pointsRedeemed, pointValue);
-  const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible, pointsDiscount, input.paymentMethod === "PAYPHONE" ? Number(service.webPrice) : null);
+  const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible, pointsDiscount, webPrice);
   let order;
   try {
     order = await db.$transaction(async (tx) => {
     let patient = session ? await tx.patient.findUnique({ where: { id: session.patientId } }) : await tx.patient.findUnique({ where: { documentId: input.documentId } });
-    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: input.ciudad } });
+    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: selectedLocation?.city ?? input.ciudad ?? "Quito" } });
     if (!patient) throw new Error("Paciente no encontrado.");
     if (input.referralCode) {
       const referrer = await tx.patientAccount.findUnique({ where: { referralCode: input.referralCode.toUpperCase() } });

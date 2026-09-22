@@ -6,7 +6,7 @@ export const checkoutSchema = z.object({
   documentId: z.string().trim().min(5).max(30),
   email: z.string().email(),
   telefono: z.string().trim().min(7).max(30),
-  ciudad: z.string().trim().min(2).max(80),
+  ciudad: z.string().trim().min(2).max(80).optional(),
   serviceId: z.string().min(1),
   paymentMethod: z.enum(["PAYPHONE", "TRANSFER", "CASH"]),
   pointsRedeemed: z.coerce.number().int().min(0).default(0),
