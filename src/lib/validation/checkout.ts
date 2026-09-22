@@ -12,4 +12,9 @@ export const checkoutSchema = z.object({
   pointsRedeemed: z.coerce.number().int().min(0).default(0),
   referralCode: z.string().trim().max(40).optional(),
   acceptTerms: z.literal(true),
+  locationId: z.string().min(1).optional(),
+  preferredDate: z.string().optional(),
+  preferredSlot: z.enum(["Mañana 09-12", "Tarde 14-18"]).optional(),
+  patientGoal: z.string().trim().max(500).optional(),
+  acceptDataConsent: z.literal(true).optional(),
 });

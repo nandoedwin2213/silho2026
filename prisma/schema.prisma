@@ -115,6 +115,7 @@ model Service {
   description               String
   shortDescription          String           @map("short_description")
   basePrice                 Decimal          @db.Decimal(10, 2) @map("base_price")
+  webPrice                  Decimal?         @db.Decimal(10, 2) @map("web_price")
   priceFrom                 Boolean          @default(true) @map("price_from")
   showPrice                 Boolean          @default(true) @map("show_price")
   discountEligible          Boolean          @default(true) @map("discount_eligible")
@@ -166,6 +167,7 @@ model Location {
   order   Int
 
   appointments Appointment[]
+  orders      Order[] @relation("OrderLocation")
 
   @@map("locations")
 }
@@ -294,6 +296,10 @@ model Order {
   id              String        @id @default(cuid())
   patientId       String        @map("patient_id")
   serviceId       String        @map("service_id")
+  locationId      String?       @map("location_id")
+  preferredDate   DateTime?     @map("preferred_date")
+  preferredSlot   String?       @map("preferred_slot")
+  patientGoal     String?       @map("patient_goal")
   appointmentId   String?       @unique @map("appointment_id")
   basePrice       Decimal       @db.Decimal(10, 2) @map("base_price")
   discountPercent Decimal       @db.Decimal(5, 2) @map("discount_percent")
@@ -312,6 +318,7 @@ model Order {
   updatedAt       DateTime      @updatedAt @map("updated_at")
   patient         Patient       @relation(fields: [patientId], references: [id])
   service         Service       @relation(fields: [serviceId], references: [id])
+  location        Location?     @relation("OrderLocation", fields: [locationId], references: [id])
   appointment     Appointment?  @relation(fields: [appointmentId], references: [id])
   payments        Payment[]
 

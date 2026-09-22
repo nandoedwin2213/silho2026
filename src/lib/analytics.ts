@@ -6,7 +6,12 @@ export type AnalyticsEvent =
   | "payment_redirect"
   | "lead_submit"
   | "route_selector_result"
-  | "checkout_submit";
+  | "checkout_submit"
+  | "treatment_view"
+  | "treatment_cta_click"
+  | "treatment_info_click"
+  | "catalog_filter"
+  | "catalog_search";
 
 export function track(event: AnalyticsEvent, params: Record<string, string | number | boolean> = {}) {
   if (typeof window === "undefined") return;

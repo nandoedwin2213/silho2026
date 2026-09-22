@@ -7,7 +7,7 @@ import { serviceImage } from "@/lib/images";
 import { getWebDiscountFor } from "@/lib/pricing";
 import { WebPrice } from "@/components/site/web-price";
 
-export async function ServiceCard({ service, categorySlug }: { service: Pick<Service, "name" | "slug" | "shortDescription" | "basePrice" | "priceFrom" | "showPrice" | "discountEligible" | "isSurgical" | "requiresMedicalAssessment" | "requiresManualQuote" | "image">; categorySlug: string }) {
+export async function ServiceCard({ service, categorySlug }: { service: Pick<Service, "name" | "slug" | "shortDescription" | "basePrice" | "webPrice" | "priceFrom" | "showPrice" | "discountEligible" | "isSurgical" | "requiresMedicalAssessment" | "requiresManualQuote" | "image">; categorySlug: string }) {
   const categoryLabel = categorySlug.replaceAll("-", " ");
   const discount = await getWebDiscountFor(service);
   const priceHidden = !service.showPrice || service.isSurgical;
@@ -21,7 +21,7 @@ export async function ServiceCard({ service, categorySlug }: { service: Pick<Ser
     <CardContent className="p-6">
       <div className="flex items-start justify-between gap-4"><div><h3 className="font-heading text-xl text-navy">{service.name}</h3></div><ArrowUpRight className="size-5 text-muted-foreground transition group-hover:text-gold" /></div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.shortDescription}</p>
-      <div className="mt-5">{priceHidden ? <p className="text-sm text-muted-foreground">Precio tras valoración</p> : <WebPrice base={Number(service.basePrice)} discountPercent={discount} priceFrom={service.priceFrom} />}</div>
+      <div className="mt-5">{priceHidden ? <p className="text-sm text-muted-foreground">Precio tras valoración</p> : <WebPrice base={Number(service.basePrice)} webPrice={service.webPrice == null ? null : Number(service.webPrice)} discountPercent={discount} priceFrom={service.priceFrom} />}</div>
       <Link href={`/tratamientos/${categorySlug}/${service.slug}`} className="mt-5 inline-flex text-sm font-semibold text-navy transition hover:text-gold">Conocer más</Link>
     </CardContent>
   </Card>;

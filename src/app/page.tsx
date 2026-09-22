@@ -35,7 +35,7 @@ export default async function Home() {
     db.professional.findFirst({ where: { active: true }, orderBy: { name: "asc" } }),
     db.location.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
     db.beforeAfter.findMany({ where: { published: true, patientConsent: true }, orderBy: { createdAt: "desc" }, take: 3 }),
-    db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, name: true, basePrice: true, discountEligible: true } }),
+    db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, name: true, basePrice: true, webPrice: true, discountEligible: true } }),
     getSettings(["WHATSAPP_NUMBER", "CLINIC_EMAIL", "CLINIC_HOURS", "WEB_TREATMENT_BONUS_USD", "WEB_BONUS_DAYS", "WEB_WEEKLY_SLOTS", "WEB_OFFER_VALID_UNTIL", "ASSESSMENT_SERVICE_SLUG"]),
     db.subscriptionPlan.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
   ]);
@@ -66,7 +66,7 @@ export default async function Home() {
             <Button asChild className="rounded-full bg-gold px-7 text-ink hover:bg-gold-light"><TrackedLink href="/reservar" event="cta_reservar_click" params={{ location: "home_hero" }}>Agenda tu valoración facial <ArrowRight /></TrackedLink></Button>
             <Button asChild variant="outline" className="rounded-full border-white/30 bg-transparent px-7 text-white hover:bg-white/10"><Link href="/descubre-tu-ruta">Descubre tu ruta facial</Link></Button>
           </div>
-          {valuation && <div className="mt-10 max-w-xl rounded-2xl border border-gold/40 bg-white/10 p-5 backdrop-blur"><p className="text-sm font-semibold text-gold-light">Reserve en línea y acceda a beneficios exclusivos</p><div className="mt-2"><WebPrice base={Number(valuation.basePrice)} discountPercent={webDiscount} size="lg" tone="dark" /></div></div>}
+          {valuation && <div className="mt-10 max-w-xl rounded-2xl border border-gold/40 bg-white/10 p-5 backdrop-blur"><p className="text-sm font-semibold text-gold-light">Reserve en línea y acceda a beneficios exclusivos</p><div className="mt-2"><WebPrice base={Number(valuation.basePrice)} webPrice={Number(valuation.webPrice)} discountPercent={webDiscount} size="lg" tone="dark" /></div></div>}
         </div>
       </section>
       <section className="bg-[#fafaf9] px-6 py-20 lg:px-10"><div className="mx-auto max-w-7xl"><div className="flex flex-wrap items-end justify-between gap-5"><SectionHeading eyebrow="Programas All Inclusive" title="Tratamiento, seguimiento y cuidado de piel cada mes." description="Elige el programa que acompaña mejor tus objetivos faciales." /><Link href="/membresias" className="text-sm font-semibold text-navy">Ver programas <ArrowRight className="ml-1 inline size-4" /></Link></div><div className="mt-8 grid gap-5 md:grid-cols-2">{plans.map((plan) => <Link key={plan.id} href={`/membresias/${plan.slug}`} className="group overflow-hidden rounded-2xl border bg-white"><div className="relative aspect-[16/7]"><Image src={plan.image || SITE_IMAGES.membresias} alt={plan.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-500 group-hover:scale-105" /></div><div className="p-5"><p className="text-xs uppercase tracking-[0.18em] text-gold">{plan.tagline}</p><h3 className="mt-2 font-heading text-2xl text-navy">{plan.name}</h3><p className="mt-2 text-sm text-muted-foreground">USD {Number(plan.price).toFixed(2)} / mes</p></div></Link>)}</div></div></section>

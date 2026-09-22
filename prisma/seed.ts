@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { catalogCategories, catalogServices } from "./catalog";
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
@@ -10,6 +11,7 @@ type ServiceSeed = {
   slug: string;
   category: string;
   price: number;
+  webPrice?: number;
   description?: string;
   shortDescription?: string;
   priceFrom?: boolean;
@@ -20,6 +22,7 @@ type ServiceSeed = {
   isSurgical?: boolean;
   featured?: boolean;
   concerns?: string[];
+  durationMinutes?: number;
 };
 
 const PROFESSIONAL = {
@@ -42,75 +45,32 @@ const LOCATIONS = [
   { city: "Guayaquil", address: "Edificio The Point, 2do piso, consultorio 208 (Puerto Santa Ana)", mapsUrl: "https://maps.app.goo.gl/Pr5HTuB5sWU69mJf8" },
 ];
 
-const categorySeeds = [
-  ["Valoración", "valoracion", "Evaluación médica para entender su rostro y definir un plan correcto.", "/images/cat-valoracion.jpg"],
-  ["Toxina botulínica", "toxina-botulinica", "Opciones faciales para suavizar líneas y conservar su expresión.", "/images/cat-toxina-botulinica.jpg"],
-  ["Ácido hialurónico", "acido-hialuronico", "Armonización facial basada en proporciones, anatomía y objetivos individuales.", "/images/cat-acido-hialuronico.jpg"],
-  ["Acné", "acne", "Tratamos el acné activo antes de que deje nuevas cicatrices.", "/images/cat-acne.jpg"],
-  ["Cicatrices de acné", "cicatrices-acne", "Cada cicatriz requiere una estrategia diferente.", "/images/cat-cicatrices-acne.jpg"],
-  ["Rejuvenecimiento facial", "rejuvenecimiento-facial", "Rejuvenecer no significa cambiar su rostro.", "/images/cat-rejuvenecimiento-facial.jpg"],
-  ["Medicina capilar", "medicina-capilar", "Categoría histórica conservada para facilitar una migración gradual.", "/images/cat-medicina-capilar.jpg"],
-  ["Trasplante capilar", "trasplante-capilar", "Categoría histórica conservada para facilitar una migración gradual.", "/images/cat-trasplante-capilar.jpg"],
-  ["Blefaroplastia", "blefaroplastia", "Categoría histórica conservada para facilitar una migración gradual.", "/images/cat-blefaroplastia.jpg"],
-  ["Rinoplastia", "rinoplastia", "Categoría histórica conservada para facilitar una migración gradual.", "/images/cat-rinoplastia.jpg"],
-  ["Perfilamiento y armonización facial", "perfilamiento-facial", "Planes faciales que respetan su identidad y comienzan con valoración.", "/images/cat-perfilamiento-facial.jpg"],
-  ["Otros procedimientos", "otros-procedimientos", "Categoría histórica conservada para facilitar una migración gradual.", "/images/cat-otros-procedimientos.jpg"],
-] as const;
-
-const inactiveCategories = new Set(["medicina-capilar", "trasplante-capilar", "blefaroplastia", "rinoplastia", "otros-procedimientos"]);
-
-const simple = (category: string, names: string[], price: number): ServiceSeed[] =>
-  names.map((name) => ({
-    name,
-    slug: `${category}-${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`,
-    category,
-    price,
-    shortDescription: "Opción para conversar durante tu valoración médica.",
-    description: "La indicación, técnica y combinación se determinan de forma personalizada durante la valoración médica.",
-  }));
-
-const services: ServiceSeed[] = [
-  ...simple("valoracion", ["Valoración estética facial", "Valoración capilar", "Valoración de acné", "Valoración de cicatrices", "Plan facial integral", "Valoración preprocedimiento"], 40),
-  ...simple("toxina-botulinica", ["Frente", "Entrecejo", "Patas de gallo", "Bunny lines", "Sonrisa gingival", "Elevación de ceja", "Mentón empedrado", "Bandas platismales", "Maseteros", "Bruxismo", "Afinamiento facial", "Tercio superior", "Full Face Botox", "Botox preventivo", "Botox masculino"], 130),
-  ...simple("acido-hialuronico", ["Labios", "Aumento de labios", "Pómulos", "Mentón", "Mandíbula", "Ojeras", "Surcos nasogenianos", "Perfilamiento nasal", "Full Face con ácido hialurónico"], 280),
-  ...simple("acne", ["Consulta de acné", "Limpieza facial profunda", "Peeling químico", "Peeling de fenol superficial", "Dermapen", "Microneedling", "PRP", "Láser CO2 fraccionado", "Tratamiento de manchas postinflamatorias", "Tratamiento de poros", "Control de piel grasa", "Tratamiento combinado de acné", "Seguimiento mensual", "Programa SILHO Acné - 1 mes", "Programa SILHO Acné - 3 meses", "Programa SILHO Acné - 6 meses"], 120),
-  ...simple("cicatrices-acne", ["Evaluación de cicatrices", "Subcisión", "Láser CO2 fraccionado", "Microneedling", "PRP", "Peeling químico", "Peeling de fenol", "TCA CROSS", "Bioestimulación", "Ácido hialurónico para cicatrices seleccionadas", "Terapia combinada", "Programa avanzado de cicatrices"], 180),
-  ...simple("rejuvenecimiento-facial", ["Botox", "Ácido hialurónico", "Bioestimuladores", "PRP", "PDRN", "Skinboosters", "Profhilo", "Ácido poliláctico", "Hidroxiapatita de calcio", "Hilos tensores", "Láser CO2", "Radiofrecuencia", "Radiofrecuencia fraccionada", "HIFU", "Microneedling", "Dermapen", "Peelings", "Tratamiento de ojeras", "Full Face", "Neck rejuvenation", "Décolleté rejuvenation"], 220),
-  ...simple("medicina-capilar", ["Valoración capilar", "Diagnóstico de alopecia", "PRP capilar", "Microneedling capilar", "Mesoterapia capilar", "Plan anticaída", "Tratamiento de alopecia", "Seguimiento fotográfico", "Tricoscopía", "Programa de recuperación capilar"], 160),
-  ...simple("trasplante-capilar", ["FUE", "Microinjerto capilar", "Diseño de línea frontal", "Restauración de entradas", "Coronilla", "Barba", "Cejas"], 999).map((service) => ({ ...service, requiresMedicalAssessment: true, requiresManualQuote: true, isSurgical: true, discountEligible: false, description: "El valor depende del número de unidades foliculares, área, técnica y planificación médica." })),
-  ...simple("blefaroplastia", ["Blefaroplastia superior", "Blefaroplastia inferior", "Superior + inferior", "Evaluación periocular"], 650).map((service) => ({ ...service, requiresMedicalAssessment: true, requiresManualQuote: true, isSurgical: true, discountEligible: false })),
-  ...simple("rinoplastia", ["Valoración de nariz", "Rinoplastia estética", "Rinoplastia funcional", "Rinoplastia estética + funcional", "Rinoplastia secundaria", "Rinomodelación no quirúrgica"], 1200).map((service) => ({
-    ...service,
-    requiresMedicalAssessment: true,
-    requiresManualQuote: service.name !== "Rinomodelación no quirúrgica" && service.name !== "Valoración de nariz",
-    isSurgical: service.name !== "Rinomodelación no quirúrgica" && service.name !== "Valoración de nariz",
-    discountEligible: service.name === "Rinomodelación no quirúrgica",
-    showPrice: service.name === "Rinomodelación no quirúrgica" || service.name === "Valoración de nariz",
-  })),
-  ...simple("perfilamiento-facial", ["Perfilamiento mandibular", "Perfil mandibular", "Jawline", "Mentón", "Labios", "Pómulos", "Nariz", "Ojeras", "Surcos", "Tercio medio", "Tercio inferior", "Full Face", "Masculinización", "Feminización", "Perfiloplastia no quirúrgica", "ESSENTIAL", "ADVANCED", "FULL FACE"], 350).map((service) => ({ ...service, requiresMedicalAssessment: true, requiresManualQuote: service.name === "ESSENTIAL" || service.name === "ADVANCED" || service.name === "FULL FACE" })),
-  ...simple("otros-procedimientos", ["Manchas", "Melasma", "Fotoenvejecimiento", "Rosácea", "Textura de piel", "Poros", "Arrugas", "Flacidez", "Cuello", "Papada", "Rejuvenecimiento de manos", "Cicatrices", "Estrías", "Eliminación de lesiones estéticas", "Hidratación facial", "Skin quality", "Protocolos de glow facial"], 150),
-  ...simple("acne", ["Tratamiento integral de acné"], 500).map((service) => ({ ...service, requiresMedicalAssessment: true, discountEligible: false })),
-  ...simple("cicatrices-acne", ["Protocolo para cicatrices de acné"], 850).map((service) => ({ ...service, requiresMedicalAssessment: true, discountEligible: false })),
-  ...simple("rejuvenecimiento-facial", ["Full Face personalizado"], 850).map((service) => ({ ...service, requiresMedicalAssessment: true, discountEligible: false })),
-];
-
-const valuationService = services.find((service) => service.slug === "valoracion-valoracion-estetica-facial");
-if (valuationService) {
-  valuationService.name = "Valoración facial con el Dr. Edwin Ayala";
-  valuationService.price = 40;
-  valuationService.shortDescription = "Evaluación médica completa del rostro para definir su ruta y plan de tratamiento.";
-  valuationService.discountEligible = true;
-}
-
-const isFeatured = (service: ServiceSeed) =>
-  service.name === "Full Face Botox" ||
-  (service.category === "acido-hialuronico" && service.name === "Labios") ||
-  (service.category === "acido-hialuronico" && service.name === "Perfilamiento nasal") ||
-  (service.category === "cicatrices-acne" && service.name === "Láser CO2 fraccionado") ||
-  (service.category === "valoracion" && service.name === "Valoración facial con el Dr. Edwin Ayala") ||
-  service.name === "Tratamiento integral de acné" ||
-  service.name === "Protocolo para cicatrices de acné" ||
-  service.name === "Full Face personalizado";
+const categorySeeds = catalogCategories.map((category) => [category.name, category.slug, category.description, category.image] as const);
+const services: ServiceSeed[] = catalogServices;
+const serviceImages: Record<string, string> = {
+  "valoracion-valoracion-estetica-facial": "/images/cat-valoracion.jpg",
+  "upper-face-18": "/images/svc-frente-entrecejo.jpg",
+  "neck-lift-botox": "/images/svc-cuello-papada.jpg",
+  "lip-design": "/images/svc-labios.jpg",
+  "rhino-profile": "/images/svc-nariz.jpg",
+  "midface-lift": "/images/svc-pomulos.jpg",
+  "collagen-sculpt": "/images/svc-bioestimuladores.jpg",
+  "skin-renew-co2": "/images/svc-laser.jpg",
+  "co2-plasma-repair": "/images/svc-prp.jpg",
+  picoclear: "/images/svc-manchas-melasma.jpg",
+  "phenol-renewal": "/images/svc-peeling.jpg",
+  "deep-glow-facial": "/images/svc-limpieza-facial.jpg",
+  "acne-control-360": "/images/svc-acne-tratamiento-combinado-de-acne.jpg",
+  "scar-release": "/images/svc-subcision.jpg",
+  "acne-scar-recovery": "/images/svc-cicatrices-acne-laser-co2-fraccionado.jpg",
+  "full-face-signature": "/images/svc-full-face.jpg",
+  "knee-hyaluron-1": "/images/svc-knee-hyaluron.jpg",
+  "knee-hyaluron-2": "/images/svc-knee-hyaluron-2.jpg",
+  "joint-prp": "/images/svc-joint-prp.jpg",
+  "medical-imaging-rx": "/images/svc-medical-imaging-rx.jpg",
+  "medical-imaging-eco": "/images/svc-medical-imaging-eco.jpg",
+  "metabolic-heart-check": "/images/svc-metabolic-heart-check.jpg",
+};
 
 const concernSeeds = ["Acné", "Cicatrices", "Arrugas", "Labios", "Nariz", "Mandíbula", "Mentón", "Ojeras", "Manchas", "Flacidez", "Poros", "Textura", "Rejuvenecimiento"];
 
@@ -319,8 +279,8 @@ async function main() {
   for (const [order, [name, slug, description, image]] of categorySeeds.entries()) {
     await prisma.category.upsert({
       where: { slug },
-      update: { name, description, image, order, active: !inactiveCategories.has(slug) },
-      create: { name, slug, description, image, order, active: !inactiveCategories.has(slug) },
+      update: { name, description, image, order, active: true },
+      create: { name, slug, description, image, order, active: true },
     });
   }
 
@@ -345,13 +305,16 @@ async function main() {
         description: service.description ?? "Tratamiento estético personalizado.",
         shortDescription: service.shortDescription ?? "Opción para conversar durante tu valoración médica.",
         basePrice: service.price,
-        priceFrom: service.priceFrom ?? true,
+        webPrice: service.webPrice ?? null,
+        priceFrom: service.priceFrom ?? false,
         showPrice: service.showPrice ?? true,
         discountEligible: service.discountEligible ?? true,
         requiresMedicalAssessment: service.requiresMedicalAssessment ?? false,
         requiresManualQuote: service.requiresManualQuote ?? false,
         isSurgical: service.isSurgical ?? false,
-        featured: isFeatured(service),
+        featured: service.featured ?? false,
+        durationMinutes: service.durationMinutes ?? 60,
+        image: serviceImages[service.slug] ?? null,
         active: true,
       },
       create: {
@@ -361,13 +324,16 @@ async function main() {
         description: service.description ?? "Tratamiento estético personalizado.",
         shortDescription: service.shortDescription ?? "Opción para conversar durante tu valoración médica.",
         basePrice: service.price,
-        priceFrom: service.priceFrom ?? true,
+        webPrice: service.webPrice ?? null,
+        priceFrom: service.priceFrom ?? false,
         showPrice: service.showPrice ?? true,
         discountEligible: service.discountEligible ?? true,
         requiresMedicalAssessment: service.requiresMedicalAssessment ?? false,
         requiresManualQuote: service.requiresManualQuote ?? false,
         isSurgical: service.isSurgical ?? false,
-        featured: isFeatured(service),
+        featured: service.featured ?? false,
+        durationMinutes: service.durationMinutes ?? 60,
+        image: serviceImages[service.slug] ?? null,
       },
     });
     const relatedConcerns = [...new Set([...(service.concerns ?? []), ...concernSeeds.filter((concern) => concernRules[concern]?.(service) || service.name.toLowerCase().includes(concern.toLowerCase()))])];
@@ -382,35 +348,11 @@ async function main() {
     }
   }
 
-  const deactivateServices: Array<[string, string]> = [
-    ["valoracion", "Valoración capilar"],
-    ["valoracion", "Valoración de acné"],
-    ["valoracion", "Valoración de cicatrices"],
-    ["valoracion", "Plan facial integral"],
-    ["valoracion", "Valoración preprocedimiento"],
-    ["rejuvenecimiento-facial", "Neck rejuvenation"],
-    ["rejuvenecimiento-facial", "Décolleté rejuvenation"],
-    ["perfilamiento-facial", "ESSENTIAL"],
-    ["perfilamiento-facial", "ADVANCED"],
-    ["perfilamiento-facial", "FULL FACE"],
-    ["acne", "Consulta de acné"],
-  ];
-  for (const [category, name] of deactivateServices) {
-    await prisma.service.updateMany({ where: { name, category: { slug: category } }, data: { active: false, featured: false } });
-  }
-  await prisma.service.updateMany({
-    where: { category: { slug: { in: [...inactiveCategories] } } },
-    data: { active: false, featured: false },
+  await prisma.service.updateMany({ where: { slug: { notIn: services.map(({ slug }) => slug) } }, data: { active: false, featured: false } });
+  await prisma.category.updateMany({
+    where: { slug: { notIn: catalogCategories.map(({ slug }) => slug) } },
+    data: { active: false },
   });
-  await prisma.service.updateMany({
-    where: { name: "Peeling de fenol", category: { slug: "cicatrices-acne" } },
-    data: { requiresMedicalAssessment: true, discountEligible: false },
-  });
-  const cabello = await prisma.concern.findUnique({ where: { slug: "cabello" } });
-  if (cabello) {
-    await prisma.serviceConcern.deleteMany({ where: { concernId: cabello.id } });
-    await prisma.concern.delete({ where: { id: cabello.id } });
-  }
 
   const settings = {
     PRONTO_PAGO_DISCOUNT: "10",
@@ -546,7 +488,7 @@ async function main() {
   const password = process.env.ADMIN_PASSWORD ?? "change-me-please";
   await prisma.adminUser.upsert({
     where: { email },
-    update: { name: "Administrador SILHO", passwordHash: await bcrypt.hash(password, 12), role: "ADMIN" },
+    update: { name: "Administrador SILHO", role: "ADMIN" },
     create: { email, name: "Administrador SILHO", passwordHash: await bcrypt.hash(password, 12), role: "ADMIN" },
   });
 

@@ -7,6 +7,7 @@ export const serviceAdminSchema = z.object({
   description: z.string().trim().min(10),
   shortDescription: z.string().trim().min(5),
   basePrice: z.coerce.number().nonnegative(),
+  webPrice: z.coerce.number().nonnegative().optional(),
   priceFrom: z.boolean().default(true),
   showPrice: z.boolean().default(true),
   discountEligible: z.boolean().default(true),
@@ -18,4 +19,6 @@ export const serviceAdminSchema = z.object({
   durationMinutes: z.coerce.number().int().positive().optional(),
   image: z.string().url().optional().or(z.literal("")),
   concerns: z.array(z.string()).default([]),
+}).superRefine((value, context) => {
+  if (value.webPrice != null && value.webPrice > value.basePrice) context.addIssue({ code: "custom", path: ["webPrice"], message: "El precio web no puede superar el precio regular." });
 });

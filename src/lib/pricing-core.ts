@@ -6,14 +6,27 @@ export function discountedPrice(base: number, pct: number) {
   return round2(base * (1 - pct / 100));
 }
 
-export function priceBreakdown(base: number, pct: number, eligible: boolean, pointsDiscount = 0) {
+export type WebPricing = { base: number; web: number; savings: number; discountPercent: number };
+
+export function webPricing(base: number, webPrice: number | null | undefined, pct: number, eligible: boolean): WebPricing {
+  const normalizedBase = round2(base);
+  if (webPrice != null && webPrice < normalizedBase) {
+    const web = round2(webPrice);
+    const savings = round2(normalizedBase - web);
+    return { base: normalizedBase, web, savings, discountPercent: Math.round((savings / normalizedBase) * 100) };
+  }
   const discountPercent = eligible ? pct : 0;
-  const savings = round2(base - discountedPrice(base, discountPercent));
-  const discounted = round2(Math.max(0, base - savings - pointsDiscount));
+  const web = discountedPrice(normalizedBase, discountPercent);
+  return { base: normalizedBase, web, savings: round2(normalizedBase - web), discountPercent };
+}
+
+export function priceBreakdown(base: number, pct: number, eligible: boolean, pointsDiscount = 0, webPrice?: number | null) {
+  const web = webPricing(base, webPrice, pct, eligible);
+  const discounted = round2(Math.max(0, web.web - pointsDiscount));
   return {
-    base: round2(base),
-    discountPercent,
+    base: web.base,
+    discountPercent: web.discountPercent,
     discounted,
-    savings,
+    savings: web.savings,
   };
 }

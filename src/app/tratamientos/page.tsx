@@ -1,16 +1,18 @@
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight } from "lucide-react";
-import { ServiceCard } from "@/components/site/service-card";
+import { TreatmentCatalog } from "@/components/site/treatment-catalog";
+import { CatalogDisclaimers } from "@/components/site/catalog-disclaimers";
 import { db } from "@/lib/db";
-import { SITE_IMAGES } from "@/lib/images";
+import { serviceImage } from "@/lib/images";
+import { getWebPricingFor } from "@/lib/pricing";
+import { getSetting } from "@/lib/settings";
 
 export const metadata = {
   title: "Tratamientos | SILHO Medicina Estética",
-  description: "Explora tratamientos faciales, capilares y de rejuvenecimiento en SILHO.",
+  description: "Tratamientos y precios exclusivos web de SILHO.",
 };
 
 export default async function TreatmentsPage() {
-  const categories = await db.category.findMany({ where: { active: true }, orderBy: { order: "asc" }, include: { services: { where: { active: true }, orderBy: { name: "asc" } } } });
-  return <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-16"><section className="relative min-h-[320px] overflow-hidden rounded-[2rem] bg-navy px-7 py-16 text-white md:px-12"><Image src={SITE_IMAGES.clinic} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover opacity-40" /><div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/75 to-navy/30" /><div className="relative max-w-2xl"><p className="text-xs uppercase tracking-[0.24em] text-gold-light">Catálogo facial SILHO</p><h1 className="mt-5 font-heading text-5xl tracking-tight md:text-6xl">Tratamientos diseñados alrededor de su rostro.</h1><p className="mt-6 text-lg leading-8 text-white/75">Explore servicios faciales y sus indicaciones antes de reservar una valoración médica.</p></div></section><div className="mt-14 space-y-16">{categories.map((category) => <section key={category.id} id={category.slug}><div className="flex items-end justify-between gap-4 border-b pb-4"><div><p className="text-xs uppercase tracking-[0.2em] text-gold">{String(category.services.length).padStart(2, "0")} tratamientos</p><h2 className="mt-2 font-heading text-3xl text-navy">{category.name}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{category.description}</p></div><Link href={`/tratamientos/${category.slug}`} className="hidden items-center gap-2 text-sm font-semibold text-navy sm:flex">Ver categoría <ArrowRight className="size-4" /></Link></div><div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{category.services.map((service) => <ServiceCard key={service.id} service={service} categorySlug={category.slug} />)}</div><Link href={`/tratamientos/${category.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-navy sm:hidden">Ver categoría <ArrowRight className="size-4" /></Link></section>)}</div></main>;
+  const [categories, number] = await Promise.all([db.category.findMany({ where: { active: true }, orderBy: { order: "asc" }, include: { services: { where: { active: true }, orderBy: { name: "asc" } } } }), getSetting("WHATSAPP_NUMBER", "593989049001")]);
+  const items = (await Promise.all(categories.flatMap((category) => category.services.map(async (service) => { const pricing = await getWebPricingFor(service); return { id: service.id, name: service.name, slug: service.slug, categorySlug: category.slug, categoryName: category.name, shortDescription: service.shortDescription, base: pricing.base, web: pricing.web, savings: pricing.savings, discountPercent: pricing.discountPercent, image: serviceImage(service, category.slug) ?? "/images/cat-valoracion.jpg" }; })))).filter(Boolean);
+  const json = { "@context": "https://schema.org", "@type": "ItemList", itemListElement: items.map((item, index) => ({ "@type": "ListItem", position: index + 1, item: { "@type": "MedicalProcedure", name: item.name, url: `/agendar/${item.slug}`, offers: { "@type": "Offer", price: item.web, priceCurrency: "USD" } } })) };
+  return <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-16"><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }} /><section className="rounded-[2rem] bg-[#fafaf9] px-7 py-16 md:px-12"><p className="text-xs uppercase tracking-[0.24em] text-gold">SILHO · Catálogo médico</p><h1 className="mt-5 max-w-3xl font-heading text-5xl tracking-tight text-navy md:text-6xl">Tratamientos y precios exclusivos web</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">Un beneficio exclusivo para pacientes que agendan o pagan en nuestra página, con información clara para elegir su siguiente paso.</p></section><section className="mt-12"><TreatmentCatalog items={items} categories={categories.map((category) => ({ slug: category.slug, name: category.name, count: category.services.length }))} whatsappNumber={number ?? "593989049001"} /></section><div className="mt-16 rounded-2xl bg-[#f5f1e8] p-6"><CatalogDisclaimers /></div></main>;
 }

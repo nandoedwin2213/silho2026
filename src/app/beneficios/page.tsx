@@ -15,7 +15,7 @@ export const metadata = {
 
 export default async function BenefitsPage() {
   const [valuation, rewards, settings] = await Promise.all([
-    db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, basePrice: true, discountEligible: true } }),
+    db.service.findUnique({ where: { slug: "valoracion-valoracion-estetica-facial" }, select: { slug: true, basePrice: true, webPrice: true, discountEligible: true } }),
     db.reward.findMany({ where: { active: true }, orderBy: { order: "asc" } }),
     getSettings(["WEB_TREATMENT_BONUS_USD", "WEB_BONUS_DAYS", "WEB_WEEKLY_SLOTS", "WEB_OFFER_VALID_UNTIL", "REWARDS_EXPIRY_MONTHS", "REWARDS_POINT_VALUE_USD"]),
   ]);
