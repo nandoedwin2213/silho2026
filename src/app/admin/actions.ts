@@ -27,12 +27,20 @@ export async function toggleServiceAction(formData: FormData) {
   revalidatePath("/admin/servicios"); revalidatePath("/tratamientos"); revalidatePath("/");
 }
 
-export async function saveServiceAction(formData: FormData) {
+type ServiceActionState = { error: string } | null;
+
+export async function saveServiceAction(_: ServiceActionState, formData: FormData): Promise<ServiceActionState> {
   await requireAdmin();
-  const parsed = serviceAdminSchema.parse({
-    name: formData.get("name"), slug: formData.get("slug"), categoryId: formData.get("categoryId"), description: formData.get("description"), shortDescription: formData.get("shortDescription"), basePrice: formData.get("basePrice"), priceFrom: formData.get("priceFrom") === "true", showPrice: formData.get("showPrice") === "true", discountEligible: formData.get("discountEligible") === "true", requiresMedicalAssessment: formData.get("requiresMedicalAssessment") === "true", requiresManualQuote: formData.get("requiresManualQuote") === "true", isSurgical: formData.get("isSurgical") === "true", active: formData.get("active") !== "false", featured: formData.get("featured") === "true", durationMinutes: formData.get("durationMinutes") || undefined, image: formData.get("image") || "",
-    webPrice: formData.get("webPrice") || undefined, concerns: formData.getAll("concerns"),
-  });
+  let parsed;
+  try {
+    parsed = serviceAdminSchema.parse({
+      name: formData.get("name"), slug: formData.get("slug"), categoryId: formData.get("categoryId"), description: formData.get("description"), shortDescription: formData.get("shortDescription"), basePrice: formData.get("basePrice"), priceFrom: formData.get("priceFrom") === "true", showPrice: formData.get("showPrice") === "true", discountEligible: formData.get("discountEligible") === "true", requiresMedicalAssessment: formData.get("requiresMedicalAssessment") === "true", requiresManualQuote: formData.get("requiresManualQuote") === "true", isSurgical: formData.get("isSurgical") === "true", active: formData.get("active") !== "false", featured: formData.get("featured") === "true", durationMinutes: formData.get("durationMinutes") || undefined, image: formData.get("image") || "",
+      webPrice: formData.get("webPrice") || undefined, concerns: formData.getAll("concerns"),
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) return { error: error.issues.map((issue) => issue.message).join(" ") };
+    throw error;
+  }
   const { concerns: concernSlugs, ...data } = parsed;
   const id = String(formData.get("id") || "");
   const service = id ? await db.service.update({ where: { id }, data }) : await db.service.create({ data });
