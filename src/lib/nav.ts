@@ -1,6 +1,6 @@
 export const navLinks = [
-  ["/", "Inicio"],
   ["/tratamientos", "Tratamientos y precios web"],
+  ["/", "Inicio"],
   ["/rejuvenecimiento-facial", "Rejuvenecimiento"],
   ["/acne", "Acné"],
   ["/cicatrices-acne", "Cicatrices"],

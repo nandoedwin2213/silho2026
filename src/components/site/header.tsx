@@ -13,7 +13,7 @@ export function Header() {
           <span className="block text-[0.58rem] uppercase tracking-[0.25em] text-gold">Medicina Estética</span>
         </Link>
         <nav className="hidden items-center gap-6 lg:flex">
-          {navLinks.slice(1, 7).map(([href, label]) => <Link key={href} href={href} className="text-sm text-muted-foreground transition hover:text-navy">{label}</Link>)}
+          {navLinks.slice(0, 6).map(([href, label]) => <Link key={href} href={href} className="text-sm text-muted-foreground transition hover:text-navy">{label}</Link>)}
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/cuenta" className="hidden items-center gap-1.5 px-2 text-sm text-muted-foreground transition hover:text-navy sm:inline-flex"><User className="size-4" /> Mi cuenta</Link>
