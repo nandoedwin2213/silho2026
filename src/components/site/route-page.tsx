@@ -9,12 +9,15 @@ import { ServiceCard } from "@/components/site/service-card";
 import { routes, type RouteSlug } from "@/lib/routes";
 import { db } from "@/lib/db";
 import { SITE_IMAGES } from "@/lib/images";
+import { getPromptPaymentDiscount } from "@/lib/pricing";
+import { WebPrice } from "@/components/site/web-price";
 
 export async function RoutePage({ slug }: { slug: RouteSlug }) {
   const route = routes[slug];
-  const [services, cases] = await Promise.all([
+  const [services, cases, routeDiscount] = await Promise.all([
     db.service.findMany({ where: { active: true, category: { slug: { in: route.categorySlugs }, active: true } }, orderBy: [{ featured: "desc" }, { name: "asc" }], include: { category: true } }),
     db.beforeAfter.findMany({ where: { published: true, patientConsent: true, routeSlug: slug }, orderBy: { createdAt: "desc" }, take: 3 }),
+    getPromptPaymentDiscount(),
   ]);
   const serviceGroups = services.reduce<Array<{ category: (typeof services)[number]["category"]; services: (typeof services)[number][] }>>((groups, service) => {
     const group = groups.find((item) => item.category.id === service.category.id);
@@ -33,7 +36,8 @@ export async function RoutePage({ slug }: { slug: RouteSlug }) {
           <p className="text-xs uppercase tracking-[0.24em] text-gold-light">{route.eyebrow}</p>
           <h1 className="mt-5 max-w-4xl font-heading text-5xl tracking-tight md:text-7xl">{route.headline}</h1>
           <p className="mt-6 max-w-2xl text-xl leading-8 text-white/80">{route.tagline}</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4"><p className="font-heading text-2xl">Desde USD {route.priceFrom}</p><span className="text-sm text-white/65">{route.priceNote}</span></div>
+          <div className="mt-8 flex flex-wrap items-center gap-4"><WebPrice base={route.priceFrom} discountPercent={routeDiscount} priceFrom size="lg" tone="dark" /><span className="text-sm text-white/65">{route.priceNote}</span></div>
+          {routeDiscount > 0 && <span className="mt-4 inline-flex rounded-full border border-gold/40 bg-white/10 px-3 py-1.5 text-xs text-gold-light">Beneficio web -{routeDiscount}% en todos los tratamientos</span>}
           <Button asChild className="mt-8 rounded-full bg-gold text-ink hover:bg-gold-light"><Link href={`/reservar?objetivo=${route.slug}`}>Reservar valoración <ArrowRight /></Link></Button>
         </div>
       </section>
