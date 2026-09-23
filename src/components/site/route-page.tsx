@@ -37,7 +37,7 @@ export async function RoutePage({ slug }: { slug: RouteSlug }) {
           <h1 className="mt-5 max-w-4xl font-heading text-5xl tracking-tight md:text-7xl">{route.headline}</h1>
           <p className="mt-6 max-w-2xl text-xl leading-8 text-white/80">{route.tagline}</p>
           <div className="mt-8 flex flex-wrap items-center gap-4"><WebPrice base={route.priceFrom} discountPercent={routeDiscount} priceFrom size="lg" tone="dark" /><span className="text-sm text-white/65">{route.priceNote}</span></div>
-          {routeDiscount > 0 && <span className="mt-4 inline-flex rounded-full border border-gold/40 bg-white/10 px-3 py-1.5 text-xs text-gold-light">Beneficio web -{routeDiscount}% en todos los tratamientos</span>}
+          {routeDiscount > 0 && <span className="mt-4 inline-flex rounded-full border border-gold/40 bg-white/10 px-3 py-1.5 text-xs text-gold-light">Precio exclusivo web en cada tratamiento</span>}
           <Button asChild className="mt-8 rounded-full bg-gold text-ink hover:bg-gold-light"><Link href={`/reservar?objetivo=${route.slug}`}>Reservar valoración <ArrowRight /></Link></Button>
         </div>
       </section>
