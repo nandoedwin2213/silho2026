@@ -31,12 +31,12 @@ const claimCookieName = "silho-claim";
 const claimError = "Debe verificar su correo para vincular su historial.";
 const unavailableEmailError = "La verificación por correo no está disponible; escríbanos por WhatsApp para vincular su cuenta.";
 
-export async function requestClaimCode({ documentId, email }: { documentId: string; email: string }) {
+export async function requestClaimCode({ documentId, email, phone = "" }: { documentId: string; email: string; phone?: string }) {
   const parsedEmail = email.trim().toLowerCase();
   const limited = rateLimit(`patient-claim:${documentId.trim()}`, 5);
   if (!limited.success) throw new Error("Demasiadas solicitudes. Inténtelo nuevamente más tarde.");
   const patient = await db.patient.findUnique({ where: { documentId: documentId.trim() } });
-  if (!patient || !canClaimPatient(patient, { email: parsedEmail, phone: "" })) {
+  if (!patient || !canClaimPatient(patient, { email: parsedEmail, phone })) {
     throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
   }
   const code = String(randomInt(100000, 1000000));
