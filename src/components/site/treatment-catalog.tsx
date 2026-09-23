@@ -75,7 +75,7 @@ export function TreatmentCatalog({ items, categories, whatsappNumber }: { items:
     </div>
 
     <div className="sticky top-16 z-10 mt-8 -mx-2 rounded-3xl border border-[#eee6d6] bg-white/90 p-2 shadow-sm backdrop-blur md:top-20">
-      <div className="flex gap-2 overflow-x-auto px-1 py-0.5 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:[mask-image:none]">
+      <div className="flex gap-2 overflow-x-auto py-0.5 pl-1 pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:pr-1 md:[mask-image:none]">
         {[{ slug: "all", name: "Todos", count: items.length }, ...categories].map((item) => <button key={item.slug} type="button" onClick={(event) => { selectCategory(item.slug); event.currentTarget.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }} aria-pressed={category === item.slug} className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm transition ${category === item.slug ? "bg-navy text-white shadow" : "text-navy/80 hover:bg-[#faf7f0]"}`}>{item.name} <span className={`ml-1 text-xs ${category === item.slug ? "text-gold-light" : "text-muted-foreground"}`}>{item.count}</span></button>)}
       </div>
       <div className="mt-2 flex flex-col gap-2 border-t border-[#eee6d6] p-2 pt-3 sm:flex-row sm:items-center">
