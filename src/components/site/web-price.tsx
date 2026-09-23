@@ -27,7 +27,7 @@ export function WebPrice({ base, webPrice, discountPercent, priceFrom = false, s
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-ink">Precio exclusivo web -{pricing.discountPercent}%</span>
-        <span className={`text-xs ${muted}`}>Ahorras {money(pricing.savings)} pagando en línea</span>
+        <span className={`text-xs ${muted}`}>Ahorras {money(pricing.savings)} con precio web</span>
       </div>
     </div>
   );

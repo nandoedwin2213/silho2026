@@ -16,11 +16,20 @@ export async function POST(request: Request) {
   if (parsed.data.paymentMethod !== "PAYPHONE") return NextResponse.json({ error: "Este endpoint requiere PayPhone." }, { status: 400 });
   const service = await db.service.findUnique({ where: { id: parsed.data.serviceId } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración." }, { status: 400 });
-  const patient = await db.patient.upsert({
-    where: { documentId: parsed.data.documentId },
-    update: {},
-    create: { firstName: parsed.data.nombre, lastName: parsed.data.apellido, documentId: parsed.data.documentId, email: parsed.data.email, phone: parsed.data.telefono, city: parsed.data.ciudad },
-  });
+  const phone = parsed.data.telefono.replace(/\D/g, "");
+  let patient = parsed.data.documentId ? await db.patient.findUnique({ where: { documentId: parsed.data.documentId } }) : await db.patient.findFirst({ where: { phone } });
+  if (!patient) {
+    patient = await db.patient.create({
+      data: {
+        firstName: parsed.data.nombre,
+        lastName: parsed.data.apellido ?? "",
+        documentId: parsed.data.documentId ?? `TEL-${phone}`,
+        email: parsed.data.email ?? "",
+        phone,
+        city: parsed.data.ciudad ?? "Quito",
+      },
+    });
+  }
   const discount = await getWebDiscountFor(service);
   const breakdown = priceBreakdown(Number(service.basePrice), discount, service.discountEligible);
   const clientTransactionId = randomUUID();
@@ -46,7 +55,7 @@ export async function POST(request: Request) {
     currency: "USD",
     clientTransactionId,
     description: service.name,
-    customer: { name: `${parsed.data.nombre} ${parsed.data.apellido}`, email: parsed.data.email, phone: parsed.data.telefono },
+    customer: { name: `${parsed.data.nombre} ${parsed.data.apellido ?? ""}`.trim(), email: parsed.data.email || undefined, phone },
   });
   await db.payment.update({ where: { clientTransactionId }, data: { providerTransactionId: payment.providerRef, status: toPaymentStatus(payment.status), rawResponse: payment } });
   return NextResponse.json({ orderId: order.id, clientTransactionId, ...payment });

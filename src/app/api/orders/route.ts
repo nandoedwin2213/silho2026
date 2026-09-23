@@ -35,6 +35,8 @@ export async function POST(request: Request) {
   const service = await db.service.findFirst({ where: { id: input.serviceId, active: true } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
   const session = await getPatientSession();
+  const phone = input.telefono.replace(/\D/g, "");
+  if (phone.length < 7) return NextResponse.json({ error: "Ingrese un número de WhatsApp válido." }, { status: 400 });
   const discount = await getWebDiscountFor(service);
   const settings = await getSettings(["REWARDS_MAX_REDEEM_PERCENT", "REWARDS_POINT_VALUE_USD"]);
   const pointValue = Number(settings.REWARDS_POINT_VALUE_USD ?? "0.05");
@@ -48,8 +50,12 @@ export async function POST(request: Request) {
   let order;
   try {
     order = await db.$transaction(async (tx) => {
-    let patient = session ? await tx.patient.findUnique({ where: { id: session.patientId } }) : await tx.patient.findUnique({ where: { documentId: input.documentId } });
-    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido, documentId: input.documentId, email: input.email, phone: input.telefono, city: selectedLocation?.city ?? input.ciudad ?? "Quito" } });
+    let patient = session
+      ? await tx.patient.findUnique({ where: { id: session.patientId } })
+      : input.documentId
+        ? await tx.patient.findUnique({ where: { documentId: input.documentId } })
+        : await tx.patient.findFirst({ where: { phone } });
+    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido ?? "", documentId: input.documentId ?? `TEL-${phone}`, email: input.email ?? "", phone, city: selectedLocation?.city ?? input.ciudad ?? "Quito" } });
     if (!patient) throw new Error("Paciente no encontrado.");
     if (input.referralCode) {
       const referrer = await tx.patientAccount.findUnique({ where: { referralCode: input.referralCode.toUpperCase() } });
@@ -69,15 +75,15 @@ export async function POST(request: Request) {
   const location = input.locationId ? await db.location.findUnique({ where: { id: input.locationId }, select: { name: true, city: true } }) : null;
   const appointmentDetails = [location ? `${location.name} · ${location.city}` : null, input.preferredDate, input.preferredSlot].filter(Boolean).join(" · ");
   await Promise.all([
-    sendEmail({
+    input.email ? sendEmail({
       to: input.email,
       subject: `SILHO · solicitud recibida para ${service.name}`,
       html: `<p>Hola ${input.nombre}, recibimos tu solicitud para <strong>${service.name}</strong>.</p><p>${appointmentDetails || "Nuestro equipo te contactará para confirmar los detalles."}</p><p>Total registrado: USD ${Number(order.total).toFixed(2)}.</p>`,
-    }),
+    }) : Promise.resolve({ sent: false }),
     process.env.ADMIN_EMAIL ? sendEmail({
       to: process.env.ADMIN_EMAIL,
       subject: `Nueva solicitud SILHO · ${service.name}`,
-      html: `<p>Nueva solicitud de ${input.nombre} ${input.apellido} (${input.email}, ${input.telefono}).</p><p>Servicio: <strong>${service.name}</strong><br />${appointmentDetails || "Sin fecha preferida"}<br />Total: USD ${Number(order.total).toFixed(2)}</p>`,
+      html: `<p>Nueva solicitud de ${input.nombre} ${input.apellido ?? ""} (${input.email ?? "sin correo"}, ${phone}).</p><p>Servicio: <strong>${service.name}</strong><br />${appointmentDetails || "Sin fecha preferida"}<br />Total: USD ${Number(order.total).toFixed(2)}</p>`,
     }) : Promise.resolve({ sent: false }),
   ]);
   if (input.paymentMethod !== "PAYPHONE") return NextResponse.json({ orderId: order.id, status: "PENDING", whatsappUrl, redirectUrl: `/checkout/gracias/${order.id}?t=${signPublicToken(order.id)}` });
@@ -86,7 +92,7 @@ export async function POST(request: Request) {
   const clientTransactionId = `silho-${order.id}`;
   const payment = await db.payment.create({ data: { orderId: order.id, provider: provider.name, clientTransactionId, amount: breakdown.discounted, status: "PENDING" } });
   try {
-    const result = await provider.createPayment({ orderId: order.id, amount: breakdown.discounted, currency: "USD", clientTransactionId, description: service.name, customer: { name: `${input.nombre} ${input.apellido}`, email: input.email, phone: input.telefono } });
+    const result = await provider.createPayment({ orderId: order.id, amount: breakdown.discounted, currency: "USD", clientTransactionId, description: service.name, customer: { name: `${input.nombre} ${input.apellido ?? ""}`.trim(), email: input.email || undefined, phone } });
     if (result.providerRef) await db.payment.update({ where: { id: payment.id }, data: { providerTransactionId: result.providerRef } });
     if (result.status === "REJECTED" || result.status === "CANCELLED" || result.status === "ERROR") await markOrderFailed(order.id);
     return NextResponse.json({ orderId: order.id, status: result.status, redirectUrl: result.redirectUrl ?? `/checkout/gracias/${order.id}?t=${signPublicToken(order.id)}` });

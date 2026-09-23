@@ -64,12 +64,6 @@ const serviceImages: Record<string, string> = {
   "scar-release": "/images/svc-subcision.jpg",
   "acne-scar-recovery": "/images/svc-cicatrices-acne-laser-co2-fraccionado.jpg",
   "full-face-signature": "/images/svc-full-face.jpg",
-  "knee-hyaluron-1": "/images/svc-knee-hyaluron.jpg",
-  "knee-hyaluron-2": "/images/svc-knee-hyaluron-2.jpg",
-  "joint-prp": "/images/svc-joint-prp.jpg",
-  "medical-imaging-rx": "/images/svc-medical-imaging-rx.jpg",
-  "medical-imaging-eco": "/images/svc-medical-imaging-eco.jpg",
-  "metabolic-heart-check": "/images/svc-metabolic-heart-check.jpg",
 };
 
 const concernSeeds = ["Acné", "Cicatrices", "Arrugas", "Labios", "Nariz", "Mandíbula", "Mentón", "Ojeras", "Manchas", "Flacidez", "Poros", "Textura", "Rejuvenecimiento"];
@@ -418,7 +412,7 @@ async function main() {
       order: 0,
       routeSlug: "acne",
       image: "/images/route-acne.jpg",
-      tagline: "All Inclusive · Acné y cicatrices de acné",
+      tagline: "Programa mensual All Inclusive · Acné y cicatrices de acné",
       focus: "Acné activo y cicatrices de acné",
       description: "Programa médico mensual que integra control del acné, tratamiento de cicatrices y cuidado de la piel con seguimiento continuo del Dr. Edwin Ayala.",
       features: [
@@ -429,6 +423,9 @@ async function main() {
         "Fotografía clínica de evolución mes a mes",
         "10% de descuento en productos y tratamientos adicionales",
         "Acumula puntos SILHO Face Rewards con cada mensualidad",
+        "Vigencia mensual con renovación automática; cancele cuando desee desde su cuenta",
+        "No incluye toxina botulínica ni ácido hialurónico (10% de descuento en esos tratamientos)",
+        "Sesiones no acumulables entre meses",
       ],
     },
     {
@@ -438,7 +435,7 @@ async function main() {
       order: 1,
       routeSlug: "rejuvenecimiento-facial",
       image: "/images/route-rejuvenecimiento.jpg",
-      tagline: "All Inclusive · Rejuvenecimiento facial",
+      tagline: "Programa mensual All Inclusive · Rejuvenecimiento facial",
       focus: "Rejuvenecimiento y calidad de piel",
       description: "Programa mensual de rejuvenecimiento facial progresivo: estimula colágeno, mejora textura y luminosidad y mantiene resultados con seguimiento médico.",
       features: [
@@ -449,6 +446,9 @@ async function main() {
         "15% de descuento en toxina botulínica y ácido hialurónico",
         "Prioridad de agenda en las tres sedes",
         "Acumula puntos SILHO Face Rewards con cada mensualidad",
+        "Vigencia mensual con renovación automática; cancele cuando desee desde su cuenta",
+        "No incluye toxina botulínica ni ácido hialurónico (15% de descuento)",
+        "Sesiones no acumulables entre meses",
       ],
     },
   ];

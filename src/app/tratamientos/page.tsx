@@ -8,6 +8,7 @@ import { getSetting } from "@/lib/settings";
 export const metadata = {
   title: "Tratamientos | SILHO Medicina Estética",
   description: "Tratamientos y precios exclusivos web de SILHO.",
+  alternates: { canonical: "/tratamientos" },
 };
 
 export default async function TreatmentsPage() {
