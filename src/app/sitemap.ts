@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db.service.findMany({ where: { active: true, category: { active: true } }, select: { slug: true, category: { select: { slug: true } }, updatedAt: true } }),
     db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
   ]);
-  const staticRoutes = ["/", "/rejuvenecimiento-facial", "/acne", "/cicatrices-acne", "/casos-clinicos", "/beneficios", "/descubre-tu-ruta", "/politicas", "/tratamientos", "/dr-edwin-ayala", "/blog", "/membresias", "/membresias/piel-clara", "/membresias/renova", "/contacto", "/privacidad", "/terminos", "/consentimiento-datos"];
+  const staticRoutes = ["/", "/rejuvenecimiento-facial", "/acne", "/cicatrices-acne", "/beneficios", "/descubre-tu-ruta", "/politicas", "/tratamientos", "/dr-edwin-ayala", "/blog", "/membresias", "/membresias/piel-clara", "/membresias/renova", "/contacto", "/privacidad", "/terminos", "/consentimiento-datos"];
   return [
     ...staticRoutes.map((path) => ({ url: `${base}${path}`, lastModified: new Date() })),
     ...landingSlugs.map((slug) => ({ url: `${base}/${slug}`, lastModified: new Date() })),

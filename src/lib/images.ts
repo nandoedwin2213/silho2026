@@ -15,7 +15,6 @@ const CATEGORY_IMAGES: Record<string, string> = {
   bioestimulacion: "/images/cat-rejuvenecimiento-facial.jpg",
   "laser-piel": "/images/svc-laser.jpg",
   "acne-cicatrices": "/images/cat-acne.jpg",
-  "medicina-articular": "/images/cat-medicina-articular.jpg",
   protocolos: "/images/svc-full-face.jpg",
 };
 
@@ -86,12 +85,6 @@ export const SERVICE_IMAGES: Record<string, string> = {
   "scar-release": "/images/svc-subcision.jpg",
   "acne-scar-recovery": "/images/svc-cicatrices-acne-laser-co2-fraccionado.jpg",
   "full-face-signature": "/images/svc-full-face.jpg",
-  "knee-hyaluron-1": "/images/svc-knee-hyaluron.jpg",
-  "knee-hyaluron-2": "/images/svc-knee-hyaluron-2.jpg",
-  "joint-prp": "/images/svc-joint-prp.jpg",
-  "medical-imaging-rx": "/images/svc-medical-imaging-rx.jpg",
-  "medical-imaging-eco": "/images/svc-medical-imaging-eco.jpg",
-  "metabolic-heart-check": "/images/svc-metabolic-heart-check.jpg",
   "toxina-botulinica-menton-empedrado": "/images/svc-toxina-botulinica-menton-empedrado.jpg",
   "acido-hialuronico-mandibula": "/images/svc-acido-hialuronico-mandibula.jpg",
   "perfilamiento-facial-jawline": "/images/svc-perfilamiento-facial-jawline.jpg",

@@ -22,7 +22,7 @@ async function getService(params: Props["params"]) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const service = await getService(params);
-  return { title: service ? `${service.name} | SILHO` : "Tratamiento | SILHO", description: service?.shortDescription ?? "Medicina estética personalizada en SILHO." };
+  return { title: service ? `${service.name} | SILHO` : "Tratamiento | SILHO", description: service?.shortDescription ?? "Medicina estética personalizada en SILHO.", alternates: service ? { canonical: `/tratamientos/${service.category.slug}/${service.slug}` } : undefined };
 }
 
 export default async function ServiceDetailPage({ params }: Props) {

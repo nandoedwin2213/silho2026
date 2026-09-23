@@ -23,6 +23,9 @@ const sora = Sora({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  alternates: {
+    canonical: "./",
+  },
   title: {
     default: "SILHO | Medicina Estética Facial · Dr. Edwin Ayala",
     template: "%s | SILHO Medicina Estética",
