@@ -17,13 +17,13 @@ export default async function TreatmentsPage() {
   return <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-16"><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }} /><section className="relative overflow-hidden rounded-[2rem] bg-[#fafaf9] px-7 py-16 md:px-12 md:py-20">
       <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-gold/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 left-1/3 size-80 rounded-full bg-[#e8dcc0]/50 blur-3xl" />
-      <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-        <div>
+      <div className="relative grid min-w-0 gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.24em] text-gold">SILHO · Catálogo médico</p>
-          <h1 className="mt-5 max-w-3xl font-heading text-5xl tracking-tight text-navy md:text-6xl">Tratamientos y precios exclusivos web</h1>
+          <h1 className="mt-5 max-w-3xl font-heading text-4xl tracking-tight text-navy sm:text-5xl md:text-6xl">Tratamientos y precios exclusivos web</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">Un beneficio exclusivo para pacientes que agendan o pagan en nuestra página: precio regular y precio web frente a frente, con el ahorro en dólares visible en cada tratamiento.</p>
         </div>
-        <ul className="grid gap-3 text-sm text-navy">
+        <ul className="grid min-w-0 gap-3 text-sm text-navy">
           {["Elige tu tratamiento y compara ambos precios", "Agenda tu valoración en Quito, Guayaquil o Salinas", "Paga en línea o reserva y paga en la sede", "Confirmación por WhatsApp y correo"].map((step, index) => <li key={step} className="flex items-center gap-3 rounded-2xl border border-[#eee6d6] bg-white/80 px-4 py-3"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-navy font-heading text-xs text-gold-light">{index + 1}</span>{step}</li>)}
         </ul>
       </div>
