@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       } else {
         const updates: { email?: string; phone?: string; city?: string } = {};
         if (!patient.email) updates.email = input.email;
-        if (normalizePhone(patient.phone) === phone && patient.phone !== phone) updates.phone = phone;
+        if (!patient.phone || (normalizePhone(patient.phone) === phone && patient.phone !== phone)) updates.phone = phone;
         if (!patient.city) updates.city = input.city;
         if (Object.keys(updates).length > 0) patient = await tx.patient.update({ where: { id: patient.id }, data: updates });
       }

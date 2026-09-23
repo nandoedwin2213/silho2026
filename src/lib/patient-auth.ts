@@ -64,7 +64,7 @@ export async function registerPatient(input: RegistrationInput) {
 
   const result = await db.$transaction(async (tx) => {
     let patient = await tx.patient.findUnique({ where: { documentId: parsed.documentId } });
-    let matchedPlaceholder = false;
+    const existing = Boolean(patient);
     if (!patient) {
       const placeholder = await tx.patient.findFirst({ where: { documentId: placeholderDocumentId(canonicalPhone) } });
       if (placeholder) {
@@ -77,7 +77,6 @@ export async function registerPatient(input: RegistrationInput) {
         if (!placeholder.lastName) updates.lastName = parsed.lastName;
         if (parsed.city) updates.city = parsed.city;
         patient = await tx.patient.update({ where: { id: placeholder.id }, data: updates });
-        matchedPlaceholder = true;
       } else {
         patient = await tx.patient.create({
           data: {
@@ -91,7 +90,7 @@ export async function registerPatient(input: RegistrationInput) {
         });
       }
     }
-    if (patient && !matchedPlaceholder) {
+    if (existing) {
       if (!canClaimPatient(patient, { email: normalizedEmail, phone: canonicalPhone })) {
         throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
       }
@@ -108,7 +107,7 @@ export async function registerPatient(input: RegistrationInput) {
       if (!verified) throw new Error(claimError);
       const updates: { email?: string; phone?: string; city?: string } = {};
       if (!patient.email) updates.email = normalizedEmail;
-      if (normalizePhone(patient.phone) === canonicalPhone && patient.phone !== canonicalPhone) updates.phone = canonicalPhone;
+      if (!patient.phone || (normalizePhone(patient.phone) === canonicalPhone && patient.phone !== canonicalPhone)) updates.phone = canonicalPhone;
       if (!patient.city && parsed.city) updates.city = parsed.city;
       if (Object.keys(updates).length > 0) patient = await tx.patient.update({ where: { id: patient.id }, data: updates });
       if (await tx.patientAccount.findUnique({ where: { patientId: patient.id } })) throw new Error("Este paciente ya tiene una cuenta.");
