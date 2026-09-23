@@ -12,6 +12,7 @@ import { bookingSchema } from "@/lib/validation/booking";
 import { routes } from "@/lib/routes";
 import { signPublicToken } from "@/lib/public-token";
 import { markOrderFailed } from "@/lib/orders";
+import { normalizePhone } from "@/lib/phone";
 
 class BookingConflictError extends Error {}
 class BookingValidationError extends Error {}
@@ -32,6 +33,9 @@ export async function POST(request: Request) {
   const parsed = bookingSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos.", issues: parsed.error.flatten() }, { status: 400 });
   const input = parsed.data;
+  const rawPhone = input.phone.trim();
+  const phone = normalizePhone(rawPhone);
+  if (phone.length < 7) return NextResponse.json({ error: "Ingrese un número de WhatsApp válido." }, { status: 400 });
   if (input.pointsRedeemed % 100 !== 0) return NextResponse.json({ error: "La cantidad de puntos no es válida." }, { status: 400 });
   if (input.objective && !routes[input.objective]) return NextResponse.json({ error: "La ruta facial no es válida." }, { status: 400 });
   if (!localDateIsValid(input.date)) return NextResponse.json({ error: "Seleccione un día entre hoy y los próximos 60 días, excepto domingos." }, { status: 400 });
@@ -60,11 +64,11 @@ export async function POST(request: Request) {
     } else {
       patient = await tx.patient.findUnique({ where: { documentId: input.documentId } });
       if (!patient) {
-        patient = await tx.patient.create({ data: { firstName: input.firstName, lastName: input.lastName, documentId: input.documentId, email: input.email, phone: input.phone, city: input.city } });
+        patient = await tx.patient.create({ data: { firstName: input.firstName, lastName: input.lastName, documentId: input.documentId, email: input.email, phone, city: input.city } });
       } else {
         const updates: { email?: string; phone?: string; city?: string } = {};
         if (!patient.email) updates.email = input.email;
-        if (!patient.phone) updates.phone = input.phone;
+        if (!patient.phone || (normalizePhone(patient.phone) === phone && patient.phone !== phone)) updates.phone = phone;
         if (!patient.city) updates.city = input.city;
         if (Object.keys(updates).length > 0) patient = await tx.patient.update({ where: { id: patient.id }, data: updates });
       }
@@ -86,7 +90,7 @@ export async function POST(request: Request) {
     const appointment = await tx.appointment.create({ data: { patientId: patient.id, serviceId: service.id, locationId: location.id, professionalId: professional.id, date: appointmentDate, status: "PENDING", objective: input.objective, intake: input.intake, promoCode: input.referralCode } });
     const order = await tx.order.create({ data: { patientId: patient.id, serviceId: service.id, appointmentId: appointment.id, basePrice: breakdown.base, discountPercent: breakdown.discountPercent, discountAmount: breakdown.base - breakdown.discounted, pointsRedeemed: requestedPoints, pointsDiscount, referralCode: input.referralCode?.toUpperCase(), total: breakdown.discounted, paymentMethod: input.paymentMethod, acceptedTerms: input.acceptTerms, channel: "WEB" } });
     if (requestedPoints > 0) await tx.pointsTransaction.create({ data: { patientId: patient.id, points: -requestedPoints, reason: "REDEMPTION", description: `Canje aplicado a la reserva ${appointment.id}`, orderId: order.id, appointmentId: appointment.id } });
-    await tx.lead.create({ data: { name: `${input.firstName} ${input.lastName}`, phone: input.phone, email: input.email, interestedService: service.name, source: input.referralCode ? "REFERRAL" : "WEB", status: "APPOINTMENT", notes: `Reserva facial ${appointment.id}` } });
+    await tx.lead.create({ data: { name: `${input.firstName} ${input.lastName}`, phone, email: input.email, interestedService: service.name, source: input.referralCode ? "REFERRAL" : "WEB", status: "APPOINTMENT", notes: `Reserva facial ${appointment.id}` } });
     return { appointment, order, patient };
     });
   } catch (error) {
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
       const clientTransactionId = `silho-${result.order.id}`;
       const payment = await db.payment.create({ data: { orderId: result.order.id, provider: provider.name, clientTransactionId, amount: result.order.total, status: "PENDING" } });
       try {
-        const created = await provider.createPayment({ orderId: result.order.id, amount: Number(result.order.total), currency: "USD", clientTransactionId, description: service.name, customer: { name: `${input.firstName} ${input.lastName}`, email: input.email, phone: input.phone } });
+        const created = await provider.createPayment({ orderId: result.order.id, amount: Number(result.order.total), currency: "USD", clientTransactionId, description: service.name, customer: { name: `${input.firstName} ${input.lastName}`, email: input.email, phone } });
         if (created.providerRef) await db.payment.update({ where: { id: payment.id }, data: { providerTransactionId: created.providerRef } });
         status = created.status;
         if (created.status === "REJECTED" || created.status === "CANCELLED" || created.status === "ERROR") await markOrderFailed(result.order.id);

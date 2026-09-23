@@ -7,6 +7,7 @@ import { checkoutSchema } from "@/lib/validation/checkout";
 import { getWebDiscountFor, priceBreakdown } from "@/lib/pricing";
 import { isPurchasable } from "@/lib/services";
 import { toPaymentStatus } from "@/lib/payments/status";
+import { normalizePhone, placeholderDocumentId } from "@/lib/phone";
 
 export async function POST(request: Request) {
   const result = rateLimit(`payphone-create:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -16,14 +17,16 @@ export async function POST(request: Request) {
   if (parsed.data.paymentMethod !== "PAYPHONE") return NextResponse.json({ error: "Este endpoint requiere PayPhone." }, { status: 400 });
   const service = await db.service.findUnique({ where: { id: parsed.data.serviceId } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración." }, { status: 400 });
-  const phone = parsed.data.telefono.replace(/\D/g, "");
-  let patient = parsed.data.documentId ? await db.patient.findUnique({ where: { documentId: parsed.data.documentId } }) : await db.patient.findFirst({ where: { phone } });
+  const rawPhone = parsed.data.telefono.trim();
+  const phone = normalizePhone(rawPhone);
+  if (phone.length < 7) return NextResponse.json({ error: "Ingrese un número de WhatsApp válido." }, { status: 400 });
+  let patient = parsed.data.documentId ? await db.patient.findUnique({ where: { documentId: parsed.data.documentId } }) : await db.patient.findFirst({ where: { phone: { in: [phone, rawPhone] } }, orderBy: { createdAt: "asc" } });
   if (!patient) {
     patient = await db.patient.create({
       data: {
         firstName: parsed.data.nombre,
         lastName: parsed.data.apellido ?? "",
-        documentId: parsed.data.documentId ?? `TEL-${phone}`,
+        documentId: parsed.data.documentId ?? placeholderDocumentId(phone),
         email: parsed.data.email ?? "",
         phone,
         city: parsed.data.ciudad ?? "Quito",

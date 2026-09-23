@@ -1,3 +1,5 @@
+import { normalizePhone } from "./phone";
+
 export type ExistingPatientContact = {
   email?: string | null;
   phone?: string | null;
@@ -8,12 +10,8 @@ export type PatientClaimInput = {
   phone: string;
 };
 
-function normalizeDigits(value: string | null | undefined) {
-  return (value ?? "").replace(/\D/g, "");
-}
-
 export function canClaimPatient(existing: ExistingPatientContact, input: PatientClaimInput) {
   const existingEmail = existing.email?.trim().toLowerCase() ?? "";
   if (existingEmail) return existingEmail === input.email.trim().toLowerCase();
-  return normalizeDigits(existing.phone) !== "" && normalizeDigits(existing.phone) === normalizeDigits(input.phone);
+  return normalizePhone(existing.phone) !== "" && normalizePhone(existing.phone) === normalizePhone(input.phone);
 }

@@ -10,6 +10,7 @@ import { accountLoginSchema, accountRegistrationSchema } from "./validation/acco
 import { getAuthSecret } from "./auth-secret";
 import { canClaimPatient } from "./patient-claim";
 import { sendEmail } from "./notifications";
+import { normalizePhone, placeholderDocumentId } from "./phone";
 
 export const patientCookieName = "silho-patient-session";
 const sessionDuration = 60 * 60 * 24 * 30;
@@ -54,6 +55,8 @@ export async function requestClaimCode({ documentId, email, phone = "" }: { docu
 export async function registerPatient(input: RegistrationInput) {
   const parsed = accountRegistrationSchema.parse(input);
   const normalizedEmail = parsed.email.toLowerCase();
+  const canonicalPhone = normalizePhone(parsed.phone);
+  if (canonicalPhone.length < 7) throw new Error("Ingrese un número de WhatsApp válido.");
   const limited = rateLimit(`patient-register:${normalizedEmail}`, 5);
   if (!limited.success) throw new Error("Demasiadas solicitudes. Inténtelo nuevamente más tarde.");
   const existingAccount = await db.patientAccount.findUnique({ where: { email: normalizedEmail } });
@@ -61,19 +64,34 @@ export async function registerPatient(input: RegistrationInput) {
 
   const result = await db.$transaction(async (tx) => {
     let patient = await tx.patient.findUnique({ where: { documentId: parsed.documentId } });
+    const existing = Boolean(patient);
     if (!patient) {
-      patient = await tx.patient.create({
-        data: {
-          firstName: parsed.firstName,
-          lastName: parsed.lastName,
+      const placeholder = await tx.patient.findFirst({ where: { documentId: placeholderDocumentId(canonicalPhone) } });
+      if (placeholder) {
+        const updates: { documentId: string; firstName: string; lastName?: string; email: string; phone: string; city?: string } = {
           documentId: parsed.documentId,
+          firstName: parsed.firstName,
           email: normalizedEmail,
-          phone: parsed.phone,
-          city: parsed.city || null,
-        },
-      });
-    } else {
-      if (!canClaimPatient(patient, { email: normalizedEmail, phone: parsed.phone })) {
+          phone: canonicalPhone,
+        };
+        if (!placeholder.lastName) updates.lastName = parsed.lastName;
+        if (parsed.city) updates.city = parsed.city;
+        patient = await tx.patient.update({ where: { id: placeholder.id }, data: updates });
+      } else {
+        patient = await tx.patient.create({
+          data: {
+            firstName: parsed.firstName,
+            lastName: parsed.lastName,
+            documentId: parsed.documentId,
+            email: normalizedEmail,
+            phone: canonicalPhone,
+            city: parsed.city || null,
+          },
+        });
+      }
+    }
+    if (existing) {
+      if (!canClaimPatient(patient, { email: normalizedEmail, phone: canonicalPhone })) {
         throw new Error("Ya existe un registro con este documento. Escríbanos por WhatsApp para vincular su cuenta.");
       }
       const claimToken = (await cookies()).get(claimCookieName)?.value;
@@ -89,7 +107,7 @@ export async function registerPatient(input: RegistrationInput) {
       if (!verified) throw new Error(claimError);
       const updates: { email?: string; phone?: string; city?: string } = {};
       if (!patient.email) updates.email = normalizedEmail;
-      if (!patient.phone) updates.phone = parsed.phone;
+      if (!patient.phone || (normalizePhone(patient.phone) === canonicalPhone && patient.phone !== canonicalPhone)) updates.phone = canonicalPhone;
       if (!patient.city && parsed.city) updates.city = parsed.city;
       if (Object.keys(updates).length > 0) patient = await tx.patient.update({ where: { id: patient.id }, data: updates });
       if (await tx.patientAccount.findUnique({ where: { patientId: patient.id } })) throw new Error("Este paciente ya tiene una cuenta.");

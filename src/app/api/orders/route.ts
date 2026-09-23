@@ -11,6 +11,7 @@ import { getSettings } from "@/lib/settings";
 import { signPublicToken } from "@/lib/public-token";
 import { markOrderFailed } from "@/lib/orders";
 import { sendEmail } from "@/lib/notifications";
+import { normalizePhone, placeholderDocumentId } from "@/lib/phone";
 
 export async function POST(request: Request) {
   const limited = rateLimit(`order:${request.headers.get("x-forwarded-for") ?? "unknown"}`, 10);
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
   const service = await db.service.findFirst({ where: { id: input.serviceId, active: true } });
   if (!service || !isPurchasable(service)) return NextResponse.json({ error: "Este servicio requiere valoración médica." }, { status: 400 });
   const session = await getPatientSession();
-  const phone = input.telefono.replace(/\D/g, "");
+  const rawPhone = input.telefono.trim();
+  const phone = normalizePhone(rawPhone);
   if (phone.length < 7) return NextResponse.json({ error: "Ingrese un número de WhatsApp válido." }, { status: 400 });
   const discount = await getWebDiscountFor(service);
   const settings = await getSettings(["REWARDS_MAX_REDEEM_PERCENT", "REWARDS_POINT_VALUE_USD"]);
@@ -54,8 +56,8 @@ export async function POST(request: Request) {
       ? await tx.patient.findUnique({ where: { id: session.patientId } })
       : input.documentId
         ? await tx.patient.findUnique({ where: { documentId: input.documentId } })
-        : await tx.patient.findFirst({ where: { phone } });
-    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido ?? "", documentId: input.documentId ?? `TEL-${phone}`, email: input.email ?? "", phone, city: selectedLocation?.city ?? input.ciudad ?? "Quito" } });
+        : await tx.patient.findFirst({ where: { phone: { in: [phone, rawPhone] } }, orderBy: { createdAt: "asc" } });
+    if (!patient) patient = await tx.patient.create({ data: { firstName: input.nombre, lastName: input.apellido ?? "", documentId: input.documentId ?? placeholderDocumentId(phone), email: input.email ?? "", phone, city: selectedLocation?.city ?? input.ciudad ?? "Quito" } });
     if (!patient) throw new Error("Paciente no encontrado.");
     if (input.referralCode) {
       const referrer = await tx.patientAccount.findUnique({ where: { referralCode: input.referralCode.toUpperCase() } });

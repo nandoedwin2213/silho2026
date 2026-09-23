@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { catalogCategories, catalogServices } from "./catalog";
+import { normalizePhone } from "../src/lib/phone";
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
@@ -270,6 +271,12 @@ Lleva información de procedimientos previos y comunica alergias, medicamentos y
 ];
 
 async function main() {
+  const patients = await prisma.patient.findMany({ select: { id: true, phone: true } });
+  for (const patient of patients) {
+    const phone = normalizePhone(patient.phone);
+    if (phone && phone !== patient.phone) await prisma.patient.update({ where: { id: patient.id }, data: { phone } });
+  }
+
   for (const [order, [name, slug, description, image]] of categorySeeds.entries()) {
     await prisma.category.upsert({
       where: { slug },
