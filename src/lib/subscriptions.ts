@@ -5,6 +5,7 @@ import { getPaymentProvider } from "./payments";
 import type { PaymentProviderStatus } from "./payments/types";
 import { toPaymentStatus } from "./payments/status";
 import { encryptCardHolder } from "./payments/payphone-crypto";
+import { cardHolderFromConfirmation, toPayphonePhone } from "./payments/payphone-holder";
 import { awardPoints } from "./rewards";
 import { getSetting } from "./settings";
 import { sendEmail } from "./notifications";
@@ -86,8 +87,8 @@ export async function settleSubscriptionPayment({ clientTransactionId, providerT
       if (typeof holder === "string" && process.env.PAYPHONE_CODING_PASSWORD) {
         try { subscriptionData.cardHolderEnc = encryptCardHolder(holder); } catch { /* optional metadata must not block settlement */ }
       }
-      subscriptionData.cardBrand = typeof rawRecord.cardBrand === "string" ? rawRecord.cardBrand : null;
-      subscriptionData.cardLast4 = typeof rawRecord.lastDigits === "string" ? rawRecord.lastDigits : null;
+      if (typeof rawRecord.cardBrand === "string") subscriptionData.cardBrand = rawRecord.cardBrand;
+      if (typeof rawRecord.lastDigits === "string") subscriptionData.cardLast4 = rawRecord.lastDigits;
       const pointsPerUsd = Number(await getSetting("REWARDS_POINTS_PER_USD", "1"));
       await awardPoints(tx, { patientId: payment.subscription.patientId, points: Math.round(Number(payment.amount) * pointsPerUsd), reason: "WEB_BOOKING_PAID", description: `Mensualidad ${payment.subscription.plan.name}` });
     } else if (next.status === "PAST_DUE") {
@@ -117,12 +118,29 @@ export async function cancelSubscription(subscriptionId: string, patientId: stri
   return db.subscription.update({ where: { id: subscriptionId, patientId }, data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason, providerToken: null, cardHolderEnc: null } });
 }
 
+async function storedCardHolder(subscriptionId: string) {
+  const payments = await db.subscriptionPayment.findMany({ where: { subscriptionId, status: "APPROVED" }, orderBy: { createdAt: "desc" }, select: { rawResponse: true } });
+  for (const payment of payments) {
+    const holder = cardHolderFromConfirmation(payment.rawResponse);
+    if (holder.name || holder.phoneNumber || holder.documentId) return holder;
+  }
+  return cardHolderFromConfirmation(null);
+}
+
+function encryptedHolder(current: string | null, name: string | undefined) {
+  if (current) return current;
+  if (!name || !process.env.PAYPHONE_CODING_PASSWORD) return null;
+  try { return encryptCardHolder(name); } catch { return null; }
+}
+
 export async function runRecurringBilling(now = new Date()) {
   const provider = getPaymentProvider("payphone");
   const subscriptions = await db.subscription.findMany({ where: { status: { in: ["ACTIVE", "PAST_DUE"] }, nextBillingDate: { lte: now } }, include: { patient: true, plan: true } });
   const summary = { charged: 0, failed: 0, skipped: 0 };
   for (const subscription of subscriptions) {
-    if (!subscription.providerToken || !subscription.cardHolderEnc) {
+    const holder = await storedCardHolder(subscription.id);
+    const cardHolderEnc = encryptedHolder(subscription.cardHolderEnc, holder.name);
+    if (!subscription.providerToken || !cardHolderEnc) {
       await db.subscription.update({ where: { id: subscription.id }, data: { status: "PAST_DUE", nextBillingDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) } });
       if (subscription.patient.email) await sendEmail({ to: subscription.patient.email, subject: "Actualice su programa SILHO", html: "<p>No pudimos renovar su programa. Ingrese a su cuenta para reactivar el cobro.</p>" });
       summary.skipped++;
@@ -132,11 +150,27 @@ export async function runRecurringBilling(now = new Date()) {
       summary.skipped++;
       continue;
     }
+    if (cardHolderEnc !== subscription.cardHolderEnc) await db.subscription.update({ where: { id: subscription.id }, data: { cardHolderEnc } });
+    const { patient, plan } = subscription;
     const periodStart = subscription.nextBillingDate ?? now;
     const periodEnd = addMonth(periodStart);
     const clientTransactionId = `SUB-${randomUUID()}`;
-    await db.subscriptionPayment.create({ data: { subscriptionId: subscription.id, kind: "RECURRING", provider: "payphone", clientTransactionId, amount: subscription.plan.price, periodStart, periodEnd } });
-    const charge = await provider.chargeToken({ cardToken: subscription.providerToken, cardHolderEnc: subscription.cardHolderEnc, documentId: subscription.patient.documentId, phoneNumber: subscription.patient.phone.replace(/\D/g, ""), email: subscription.patient.email, amount: Number(subscription.plan.price), currency: "USD", clientTransactionId, description: subscription.plan.name });
+    await db.subscriptionPayment.create({ data: { subscriptionId: subscription.id, kind: "RECURRING", provider: "payphone", clientTransactionId, amount: plan.price, periodStart, periodEnd } });
+    const charge = await provider.chargeToken({
+      cardToken: subscription.providerToken,
+      cardHolderEnc,
+      holderName: holder.name ?? `${patient.firstName} ${patient.lastName}`,
+      documentId: holder.documentId ?? patient.documentId,
+      phoneNumber: toPayphonePhone(holder.phoneNumber ?? patient.phone),
+      email: holder.email ?? patient.email,
+      amount: Number(plan.price),
+      currency: "USD",
+      clientTransactionId,
+      description: plan.name,
+      sku: plan.slug,
+      city: patient.city,
+      customerId: patient.id,
+    });
     const settled = await settleSubscriptionPayment({ clientTransactionId, providerTransactionId: charge.providerTransactionId, status: charge.status, raw: charge.raw });
     if (settled.status === "APPROVED") summary.charged++;
     else if (settled.status === "REJECTED" || settled.status === "CANCELLED" || settled.status === "ERROR") summary.failed++;
