@@ -1,4 +1,5 @@
 import type { PaymentProvider, PaymentProviderStatus } from "./types";
+import { splitName } from "./payphone-holder";
 
 const endpoint = "https://pay.payphonetodoesposible.com";
 
@@ -50,6 +51,7 @@ export const payphone: PaymentProvider = {
   async chargeToken(input) {
     if (!this.isConfigured()) return { status: "PENDING_CONFIGURATION", raw: {} };
     const cents = Math.round(input.amount * 100);
+    const { firstName, lastName } = splitName(input.holderName);
     const response = await fetch(`${endpoint}/api/transaction/web`, {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.PAYPHONE_TOKEN}`, "Content-Type": "application/json" },
@@ -69,6 +71,19 @@ export const payphone: PaymentProvider = {
         currency: input.currency,
         storeId: process.env.PAYPHONE_STORE_ID,
         optionalParameter: input.description,
+        order: {
+          billTo: {
+            address1: input.city || "Ecuador",
+            country: "EC",
+            locality: input.city || undefined,
+            firstName,
+            lastName,
+            phoneNumber: `+${input.phoneNumber}`,
+            email: input.email,
+            customerId: input.customerId,
+          },
+          lineItems: [{ productName: input.description, unitPrice: cents, quantity: 1, totalAmount: cents, taxAmount: 0, productSKU: input.sku, productDescription: `Mensualidad ${input.description}` }],
+        },
       }),
     });
     const raw = await response.json();

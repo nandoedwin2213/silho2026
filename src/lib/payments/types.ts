@@ -14,6 +14,7 @@ export interface PaymentProvider {
   chargeToken?(input: {
     cardToken: string;
     cardHolderEnc: string;
+    holderName: string;
     documentId: string;
     phoneNumber: string;
     email: string;
@@ -21,6 +22,9 @@ export interface PaymentProvider {
     currency: string;
     clientTransactionId: string;
     description: string;
+    sku: string;
+    city?: string | null;
+    customerId: string;
   }): Promise<{ status: PaymentProviderStatus; providerTransactionId?: string; raw: unknown }>;
   confirmPayment(input: { providerTransactionId: string; clientTransactionId: string }): Promise<{ status: PaymentProviderStatus; raw: unknown }>;
   parseWebhook(req: Request): Promise<{ clientTransactionId: string; providerTransactionId: string; status: PaymentProviderStatus; raw: unknown }>;
